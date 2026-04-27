@@ -1,20 +1,14 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Wavelength Mini
 
-# Run and deploy your AI Studio app
+Mini juego local para 2 personas inspirado en Wavelength.
 
-This contains everything you need to run your app locally.
+La idea es usar una ruleta física en pantalla: una persona gira la rueda con la tapa cerrada, puede abrirla para ver dónde cayó la puntuación y volver a cerrarla. La otra persona mueve la flecha intentando acertar la zona correcta. Todo ocurre en una sola pantalla, sin temas, textos ni navegación.
 
-View your app in AI Studio: https://ai.studio/apps/130fffad-ef54-41e9-bca9-3f9fe8c1478a
+## Ejecutar
 
-## Run Locally
+```bash
+npm install
+npm run dev
+```
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Abre la URL que muestre Vite en la terminal.
