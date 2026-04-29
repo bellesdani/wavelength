@@ -10,6 +10,7 @@ const LABEL_RADIUS = RADIUS - 42;
 const POINTER_LENGTH = 128;
 
 interface DialProps {
+  canMovePointer?: boolean;
   coverOpen: boolean;
   guessAngle: number;
   isSpinning: boolean;
@@ -27,6 +28,7 @@ const scoreSlices = [
 ];
 
 const Dial = ({
+  canMovePointer = true,
   coverOpen,
   guessAngle,
   isSpinning,
@@ -53,7 +55,7 @@ const Dial = ({
   };
 
   return (
-    <div ref={dragRef} className="relative w-full max-w-[620px] aspect-[1/0.92]">
+    <div ref={dragRef} className="relative w-full max-w-[560px] aspect-[1/0.92]">
       <svg viewBox="0 0 400 368" className="h-full w-full drop-shadow-[0_24px_30px_rgba(15,23,42,0.22)]" role="img" aria-label="Ruleta de puntos">
         <defs>
           <radialGradient id="face" cx="48%" cy="42%" r="62%">
@@ -67,6 +69,20 @@ const Dial = ({
           <linearGradient id="baseFill" x1="0" y1="200" x2="0" y2="350" gradientUnits="userSpaceOnUse">
             <stop offset="0" stopColor="#66737c" />
             <stop offset="1" stopColor="#46535d" />
+          </linearGradient>
+          <linearGradient id="baseTopFill" x1="34" y1="205" x2="366" y2="205" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#36434d" />
+            <stop offset="0.5" stopColor="#6d7b84" />
+            <stop offset="1" stopColor="#33404a" />
+          </linearGradient>
+          <linearGradient id="baseBodyFill" x1="56" y1="232" x2="344" y2="350" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#71808a" />
+            <stop offset="0.58" stopColor="#4c5a64" />
+            <stop offset="1" stopColor="#2e3942" />
+          </linearGradient>
+          <linearGradient id="basePanelFill" x1="102" y1="242" x2="298" y2="330" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stopColor="#e8efeb" />
+            <stop offset="1" stopColor="#bac7c2" />
           </linearGradient>
           <filter id="texture" x="0" y="0" width="100%" height="100%">
             <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="9" />
@@ -142,36 +158,55 @@ const Dial = ({
         </g>
 
         <g>
-          <rect x="0" y={BASE_TOP} width="400" height="168" fill="url(#baseFill)" />
-          <rect x="0" y={BASE_TOP} width="400" height="14" fill="#ffffff" opacity="0.16" />
-          <rect x="0" y={BASE_TOP} width="400" height="168" fill="none" stroke="#2f3a42" strokeWidth="8" />
-          <circle cx={CENTER} cy={BASE_TOP} r="22" fill="#3b4650" />
-          <circle cx={CENTER} cy={BASE_TOP} r="11" fill="#171d22" />
+          <ellipse cx="200" cy="356" rx="154" ry="17" fill="#111820" opacity="0.18" />
+          <path d="M 8 200 L 392 200 L 356 246 L 44 246 Z" fill="url(#baseTopFill)" />
+          <path d="M 44 246 L 356 246 L 334 358 L 66 358 Z" fill="url(#baseBodyFill)" />
+          <path d="M 50 246 L 350 246 L 340 288 Q 200 313 60 288 Z" fill="#ffffff" opacity="0.09" />
+          <path d="M 66 358 L 334 358 L 302 366 L 98 366 Z" fill="#25313a" />
+          <path d="M 80 252 L 320 252 L 300 334 Q 200 350 100 334 Z" fill="url(#basePanelFill)" opacity="0.95" />
+          <path d="M 98 260 L 302 260" stroke="#ffffff" strokeWidth="7" strokeLinecap="round" opacity="0.45" />
+          <Screw x={116} y={286} />
+          <Screw x={284} y={286} />
+          <text x="200" y="296" textAnchor="middle" fontSize="22" fontWeight="900" letterSpacing="1.4" fill="#202a32">
+            WAVELENGTH
+          </text>
+          <text x="200" y="316" textAnchor="middle" fontSize="12" fontWeight="900" letterSpacing="3" fill="#52606a">
+            MINI
+          </text>
+          <path d="M 116 334 Q 200 348 284 334" stroke="#7d8a92" strokeWidth="5" strokeLinecap="round" opacity="0.45" />
+          <path d="M 14 204 L 386 204" stroke="#202a32" strokeWidth="9" strokeLinecap="round" />
+          <circle cx={CENTER} cy={BASE_TOP} r="24" fill="#35414a" />
+          <circle cx={CENTER} cy={BASE_TOP} r="13" fill="#151b20" />
+          <circle cx="190" cy="192" r="4" fill="#ffffff" opacity="0.28" />
+          <path d="M 62 358 L 118 358 L 108 366 L 50 366 Z" fill="#202a32" opacity="0.75" />
+          <path d="M 282 358 L 338 358 L 350 366 L 292 366 Z" fill="#202a32" opacity="0.75" />
         </g>
 
         <Pointer rotation={angleToRotation(guessAngle)} />
       </svg>
 
-      <div
-        className="absolute inset-x-0 top-0 z-10 h-[64%] cursor-pointer touch-none"
-        onPointerDown={(event) => {
-          isDraggingRef.current = true;
-          event.currentTarget.setPointerCapture(event.pointerId);
-          updateGuess(event);
-        }}
-        onPointerMove={(event) => {
-          if (isDraggingRef.current) {
+      {canMovePointer && (
+        <div
+          className="absolute inset-x-0 top-0 z-10 h-[64%] cursor-pointer touch-none"
+          onPointerDown={(event) => {
+            isDraggingRef.current = true;
+            event.currentTarget.setPointerCapture(event.pointerId);
             updateGuess(event);
-          }
-        }}
-        onPointerUp={(event) => {
-          isDraggingRef.current = false;
-          event.currentTarget.releasePointerCapture(event.pointerId);
-        }}
-        onPointerCancel={() => {
-          isDraggingRef.current = false;
-        }}
-      />
+          }}
+          onPointerMove={(event) => {
+            if (isDraggingRef.current) {
+              updateGuess(event);
+            }
+          }}
+          onPointerUp={(event) => {
+            isDraggingRef.current = false;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => {
+            isDraggingRef.current = false;
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -206,6 +241,14 @@ const Pointer = ({ rotation }: { rotation: number }) => (
     />
     <circle cx={CENTER} cy={CENTER} r="6" fill="#202a32" />
     <circle cx={CENTER} cy={CENTER} r="2.5" fill="#d63a31" />
+  </g>
+);
+
+const Screw = ({ x, y }: { x: number; y: number }) => (
+  <g>
+    <circle cx={x} cy={y} r="10" fill="#6f7d86" stroke="#202a32" strokeWidth="3" />
+    <circle cx={x - 3} cy={y - 4} r="2" fill="#ffffff" opacity="0.35" />
+    <path d={`M ${x - 5} ${y + 1} L ${x + 5} ${y - 1}`} stroke="#202a32" strokeWidth="2.5" strokeLinecap="round" />
   </g>
 );
 

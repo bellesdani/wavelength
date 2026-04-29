@@ -1,76 +1,32 @@
-import { useRef, useState } from 'react';
-import type { ReactNode } from 'react';
-import { Eye, EyeOff, RefreshCw } from 'lucide-react';
-import Dial from './components/Dial';
+import { Monitor, Wifi } from 'lucide-react';
+import { useState } from 'react';
+import ActionButton from './components/ActionButton';
+import LocalGame from './components/LocalGame';
+import OnlineGame from './components/OnlineGame';
 
-const SPIN_DURATION_MS = 1500;
+type Mode = 'menu' | 'local' | 'online';
 
 const App = () => {
-  const [coverOpen, setCoverOpen] = useState(false);
-  const [guessAngle, setGuessAngle] = useState(90);
-  const [wheelRotation, setWheelRotation] = useState(90);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const timerRef = useRef<number | null>(null);
-
-  const spin = () => {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-    }
-
-    const randomAngle = Math.round(Math.random() * 180);
-    const currentTurns = Math.ceil(wheelRotation / 360);
-    const nextRotation = (currentTurns + 4) * 360 + randomAngle;
-
-    setWheelRotation(nextRotation);
-    setIsSpinning(true);
-
-    timerRef.current = window.setTimeout(() => {
-      setIsSpinning(false);
-      timerRef.current = null;
-      navigator.vibrate?.(18);
-    }, SPIN_DURATION_MS);
-  };
+  const [mode, setMode] = useState<Mode>('menu');
 
   return (
-    <main className="min-h-dvh bg-white flex flex-col items-center justify-center gap-8 p-6 overflow-hidden">
-      <Dial
-        coverOpen={coverOpen}
-        guessAngle={guessAngle}
-        isSpinning={isSpinning}
-        onGuessChange={setGuessAngle}
-        spinDurationMs={SPIN_DURATION_MS}
-        wheelRotation={wheelRotation}
-      />
+    <main className="min-h-dvh bg-[#f7f4ef] text-[#202a32] flex flex-col items-center justify-center gap-6 p-5 overflow-hidden">
+      {mode === 'menu' && (
+        <section className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)]">
+          <h1 className="text-2xl font-black uppercase tracking-[0.08em]">Wavelength Mini</h1>
+          <p className="mt-2 text-sm font-semibold text-[#7b6f63]">Elige como jugar</p>
 
-      <div className="h-16 flex items-center justify-center gap-3">
-        <ActionButton label="Spin" icon={<RefreshCw className={isSpinning ? 'animate-spin' : ''} />} onClick={spin} />
-        <ActionButton
-          label={coverOpen ? 'Cerrar' : 'Ver'}
-          icon={coverOpen ? <EyeOff /> : <Eye />}
-          onClick={() => setCoverOpen((open) => !open)}
-        />
-      </div>
+          <div className="mt-6 flex flex-col gap-3">
+            <ActionButton label="Local" icon={<Monitor />} onClick={() => setMode('local')} />
+            <ActionButton label="Online" icon={<Wifi />} onClick={() => setMode('online')} variant="light" />
+          </div>
+        </section>
+      )}
+
+      {mode === 'local' && <LocalGame />}
+      {mode === 'online' && <OnlineGame />}
     </main>
   );
 };
-
-const ActionButton = ({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: ReactNode;
-  label: string;
-  onClick: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="h-14 min-w-36 rounded-full bg-[#202a32] px-6 text-white font-black uppercase tracking-[0.08em] flex items-center justify-center gap-3 shadow-[0_14px_28px_rgba(15,23,42,0.2)] transition hover:bg-[#111820] active:scale-95"
-  >
-    {icon}
-    {label}
-  </button>
-);
 
 export default App;
