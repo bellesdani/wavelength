@@ -1,1 +1,79 @@
 @import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #e9ede8;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.animate-score-pop {
+  animation: score-pop 680ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-reveal-pop {
+  animation: reveal-pop 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.animate-score-burst {
+  animation: score-burst 760ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes score-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  38% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes reveal-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes score-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.74) rotate(-4deg);
+  }
+
+  45% {
+    opacity: 1;
+    transform: scale(1.16) rotate(2deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}

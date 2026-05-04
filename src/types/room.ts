@@ -4,6 +4,7 @@ export interface GameSnapshot {
   guessLocked: boolean;
   isSpinning: boolean;
   roundResult: RoundResult | null;
+  spinDurationMs: number;
   wheelRotation: number;
 }
 
@@ -15,12 +16,19 @@ export interface RoundResult {
 
 export interface RoomSnapshot {
   code: string;
+  history: RoundHistoryEntry[];
   names: PlayerNames;
   players: number;
   role: PlayerRole;
   round: number;
   scores: Scoreboard;
   state: GameSnapshot;
+}
+
+export interface RoundHistoryEntry {
+  round: number;
+  score: number;
+  scoredPlayer: PlayerSlot;
 }
 
 export type PlayerRole = 'guesser' | 'spinner';
@@ -31,4 +39,10 @@ export type Scoreboard = Record<PlayerSlot, number>;
 
 export type PlayerNames = Record<PlayerSlot, string | null>;
 
-export const SPIN_DURATION_MS = 1500;
+export const DEFAULT_SPIN_DURATION_MS = 1800;
+export const MAX_EXTRA_TURNS = 7;
+export const MIN_EXTRA_TURNS = 4;
+export const SPIN_DURATION_RANGE_MS = {
+  max: 2600,
+  min: 1300,
+};

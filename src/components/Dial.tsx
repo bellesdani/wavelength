@@ -20,11 +20,11 @@ interface DialProps {
 }
 
 const scoreSlices = [
-  { color: '#f4d438', from: -34, to: -22, label: '1' },
-  { color: '#f28a2e', from: -22, to: -11, label: '2' },
-  { color: '#d63a31', from: -11, to: 11, label: '3' },
-  { color: '#f28a2e', from: 11, to: 22, label: '2' },
-  { color: '#f4d438', from: 22, to: 34, label: '1' },
+  { color: '#f4d438', from: -29, to: -17, label: '1' },
+  { color: '#f28a2e', from: -17, to: -7, label: '2' },
+  { color: '#d63a31', from: -7, to: 7, label: '3' },
+  { color: '#f28a2e', from: 7, to: 17, label: '2' },
+  { color: '#f4d438', from: 17, to: 29, label: '1' },
 ];
 
 const Dial = ({
@@ -55,8 +55,8 @@ const Dial = ({
   };
 
   return (
-    <div ref={dragRef} className="relative w-full max-w-[560px] aspect-[1/0.92]">
-      <svg viewBox="0 0 400 368" className="h-full w-full drop-shadow-[0_24px_30px_rgba(15,23,42,0.22)]" role="img" aria-label="Ruleta de puntos">
+    <div ref={dragRef} className="relative aspect-[1/0.92] w-[min(100%,calc((100dvh-15rem)/0.92))] min-w-[260px] max-w-[560px] sm:w-full sm:min-w-0">
+      <svg viewBox="0 0 400 368" className="h-full w-full" role="img" aria-label="Ruleta de puntos">
         <defs>
           <radialGradient id="face" cx="48%" cy="42%" r="62%">
             <stop offset="0" stopColor="#ffffff" />
@@ -84,13 +84,11 @@ const Dial = ({
             <stop offset="0" stopColor="#e8efeb" />
             <stop offset="1" stopColor="#bac7c2" />
           </linearGradient>
-          <filter id="texture" x="0" y="0" width="100%" height="100%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="9" />
-            <feColorMatrix type="saturate" values="0" />
-            <feComponentTransfer>
-              <feFuncA type="table" tableValues="0 0.055" />
-            </feComponentTransfer>
-          </filter>
+          <pattern id="faceTexture" width="18" height="18" patternUnits="userSpaceOnUse">
+            <circle cx="3" cy="4" r="1" fill="#202a32" opacity="0.045" />
+            <circle cx="13" cy="11" r="0.8" fill="#202a32" opacity="0.035" />
+            <path d="M 0 17 L 18 0" stroke="#202a32" strokeWidth="0.8" opacity="0.018" />
+          </pattern>
           <clipPath id="circleFace">
             <circle cx={CENTER} cy={CENTER} r={RADIUS - 18} />
           </clipPath>
@@ -130,7 +128,7 @@ const Dial = ({
               <rect x="52" y="196" width="296" height="8" fill="#111827" opacity="0.26" />
               <rect x="52" y="198.5" width="296" height="3" fill="#ffffff" opacity="0.18" />
 
-              <rect x="52" y="52" width="296" height="296" fill="url(#texture)" />
+              <rect x="52" y="52" width="296" height="296" fill="url(#faceTexture)" />
             </g>
           </motion.g>
 

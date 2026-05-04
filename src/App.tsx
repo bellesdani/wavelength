@@ -10,21 +10,23 @@ const App = () => {
   const [mode, setMode] = useState<Mode>('menu');
 
   return (
-    <main className="min-h-dvh bg-[#f7f4ef] text-[#202a32] flex flex-col items-center justify-center gap-6 p-5 overflow-hidden">
-      {mode === 'menu' && (
-        <section className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)]">
-          <h1 className="text-2xl font-black uppercase tracking-[0.08em]">Wavelength Mini</h1>
-          <p className="mt-2 text-sm font-semibold text-[#7b6f63]">Elige como jugar</p>
+    <main className="h-dvh overflow-hidden bg-[#e9ede8] text-[#202a32]">
+      <div className="mx-auto flex h-full w-full max-w-6xl items-center justify-center p-3 sm:p-5">
+        {mode === 'menu' && (
+          <section className="w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
+            <h1 className="text-2xl font-black uppercase tracking-[0.08em]">Wavelength Mini</h1>
+            <p className="mt-2 text-sm font-semibold text-[#7b6f63]">Elige como jugar</p>
 
-          <div className="mt-6 flex flex-col gap-3">
-            <ActionButton label="Local" icon={<Monitor />} onClick={() => setMode('local')} />
-            <ActionButton label="Online" icon={<Wifi />} onClick={() => setMode('online')} variant="light" />
-          </div>
-        </section>
-      )}
+            <div className="mt-6 flex flex-col gap-3">
+              <ActionButton label="Local" icon={<Monitor />} onClick={() => setMode('local')} />
+              <ActionButton label="Online" icon={<Wifi />} onClick={() => setMode('online')} variant="light" />
+            </div>
+          </section>
+        )}
 
-      {mode === 'local' && <LocalGame />}
-      {mode === 'online' && <OnlineGame />}
+        {mode === 'local' && <LocalGame />}
+        {mode === 'online' && <OnlineGame />}
+      </div>
     </main>
   );
 };

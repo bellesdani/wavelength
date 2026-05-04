@@ -4,7 +4,13 @@ import { Server } from 'socket.io';
 import type { Socket } from 'socket.io';
 
 const PORT = Number(process.env.PORT ?? 3001);
-const SPIN_DURATION_MS = 1500;
+const DEFAULT_SPIN_DURATION_MS = 1800;
+const MIN_EXTRA_TURNS = 4;
+const MAX_EXTRA_TURNS = 7;
+const SPIN_DURATION_RANGE_MS = {
+  max: 2600,
+  min: 1300,
+};
 
 interface GameSnapshot {
   coverOpen: boolean;
@@ -12,11 +18,13 @@ interface GameSnapshot {
   guessLocked: boolean;
   isSpinning: boolean;
   roundResult: RoundResult | null;
+  spinDurationMs: number;
   wheelRotation: number;
 }
 
 interface Room {
   code: string;
+  history: RoundHistoryEntry[];
   names: PlayerNames;
   players: Map<string, PlayerSlot>;
   round: number;
@@ -30,6 +38,11 @@ type PlayerRole = 'guesser' | 'spinner';
 type PlayerSlot = 'player1' | 'player2';
 type Scoreboard = Record<PlayerSlot, number>;
 type PlayerNames = Record<PlayerSlot, string | null>;
+type RoundHistoryEntry = {
+  round: number;
+  score: number;
+  scoredPlayer: PlayerSlot;
+};
 type RoundResult = {
   nextRoundAt: number;
   score: number;
@@ -42,6 +55,7 @@ const initialState = (): GameSnapshot => ({
   guessLocked: false,
   isSpinning: false,
   roundResult: null,
+  spinDurationMs: DEFAULT_SPIN_DURATION_MS,
   wheelRotation: 90,
 });
 
@@ -96,6 +110,8 @@ io.on('connection', (socket) => {
     }
 
     const randomAngle = Math.round(Math.random() * 180);
+    const extraTurns = randomInt(MIN_EXTRA_TURNS, MAX_EXTRA_TURNS);
+    const spinDurationMs = randomInt(SPIN_DURATION_RANGE_MS.min, SPIN_DURATION_RANGE_MS.max);
     const currentTurns = Math.ceil(room.state.wheelRotation / 360);
 
     room.state = {
@@ -104,7 +120,8 @@ io.on('connection', (socket) => {
       guessLocked: false,
       isSpinning: true,
       roundResult: null,
-      wheelRotation: (currentTurns + 4) * 360 + randomAngle,
+      spinDurationMs,
+      wheelRotation: (currentTurns + extraTurns) * 360 + randomAngle,
     };
 
     emitRoom(room);
@@ -113,7 +130,7 @@ io.on('connection', (socket) => {
       room.state = { ...room.state, isSpinning: false };
       room.spinTimer = undefined;
       emitRoom(room);
-    }, SPIN_DURATION_MS);
+    }, spinDurationMs);
   });
 
   socket.on('toggle_cover', () => {
@@ -172,6 +189,14 @@ io.on('connection', (socket) => {
       ...room.scores,
       [guesserSlot]: room.scores[guesserSlot] + score,
     };
+    room.history = [
+      ...room.history,
+      {
+        round: room.round,
+        score,
+        scoredPlayer: guesserSlot,
+      },
+    ].slice(-8);
     room.state = {
       ...room.state,
       coverOpen: true,
@@ -221,6 +246,7 @@ function createRoom() {
 
   const room: Room = {
     code,
+    history: [],
     names: {
       player1: null,
       player2: null,
@@ -274,6 +300,7 @@ function emitRoom(room: Room) {
   room.players.forEach((_slot, socketId) => {
     io.to(socketId).emit('room_state', {
       code: room.code,
+      history: room.history,
       names: room.names,
       players: room.players.size,
       role: getRole(room, socketId),
@@ -300,15 +327,19 @@ function calculateScore(wheelRotation: number, guessAngle: number) {
   const rawDifference = Math.abs(targetAngle - guessAngle);
   const difference = Math.min(rawDifference, 180 - rawDifference);
 
-  if (difference <= 11) return 3;
-  if (difference <= 22) return 2;
-  if (difference <= 34) return 1;
+  if (difference <= 7) return 3;
+  if (difference <= 17) return 2;
+  if (difference <= 29) return 1;
   return 0;
 }
 
 function generateCode() {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   return Array.from({ length: 4 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join('');
+}
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function normalizeCode(code: string) {
