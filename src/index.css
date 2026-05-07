@@ -23,6 +23,30 @@ input {
   font: inherit;
 }
 
+.online-game-panel {
+  height: 100%;
+}
+
+.online-dial {
+  width: min(100%, calc((100dvh - 15rem) / 0.92));
+}
+
+@media (min-width: 640px) {
+  .online-game-panel {
+    height: min(720px, calc(100dvh - 4rem));
+  }
+
+  .online-dial {
+    width: min(100%, 340px, calc((100dvh - 23rem) / 0.92));
+  }
+}
+
+@media (min-width: 640px) and (max-height: 740px) {
+  .online-dial {
+    width: min(100%, 300px, calc((100dvh - 22rem) / 0.92));
+  }
+}
+
 .animate-score-pop {
   animation: score-pop 680ms cubic-bezier(0.16, 1, 0.3, 1);
 }

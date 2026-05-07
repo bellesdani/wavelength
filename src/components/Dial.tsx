@@ -16,6 +16,7 @@ const SCORE_THRESHOLDS = {
 
 interface DialProps {
   canMovePointer?: boolean;
+  className?: string;
   coverOpen: boolean;
   guessAngle: number;
   isSpinning: boolean;
@@ -34,6 +35,7 @@ const scoreSlices = [
 
 const Dial = ({
   canMovePointer = true,
+  className = '',
   coverOpen,
   guessAngle,
   isSpinning,
@@ -60,7 +62,10 @@ const Dial = ({
   };
 
   return (
-    <div ref={dragRef} className="relative aspect-[1/0.92] w-[min(100%,calc((100dvh-15rem)/0.92))] min-w-[260px] max-w-[560px] sm:w-full sm:min-w-0">
+    <div
+      ref={dragRef}
+      className={`relative aspect-[1/0.92] w-[min(100%,calc((100dvh-15rem)/0.92))] min-w-[260px] max-w-[560px] sm:w-full sm:min-w-0 ${className}`}
+    >
       <svg viewBox="0 0 400 368" className="h-full w-full" role="img" aria-label="Ruleta de puntos">
         <defs>
           <radialGradient id="face" cx="48%" cy="42%" r="62%">

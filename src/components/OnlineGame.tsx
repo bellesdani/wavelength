@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DoorOpen, Eye, EyeOff, Flag, Link2, RefreshCw, Unplug } from 'lucide-react';
+import { ArrowLeft, DoorOpen, Eye, EyeOff, Flag, Link2, RefreshCw, Unplug } from 'lucide-react';
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
 import ActionButton from './ActionButton';
@@ -19,11 +19,16 @@ const initialState: GameSnapshot = {
   wheelRotation: 90,
 };
 
-const OnlineGame = () => {
+interface OnlineGameProps {
+  onBack: () => void;
+}
+
+const OnlineGame = ({ onBack }: OnlineGameProps) => {
   const socket = useMemo<Socket>(() => io(SOCKET_URL, { autoConnect: false }), []);
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [playerName, setPlayerName] = useState('');
+  const [serverTimeOffset, setServerTimeOffset] = useState(0);
   const [status, setStatus] = useState('Sin conectar');
   const [state, setState] = useState<GameSnapshot>(initialState);
 
@@ -33,6 +38,8 @@ const OnlineGame = () => {
     socket.on('connect', () => setStatus('Conectado'));
     socket.on('disconnect', () => setStatus('Desconectado'));
     socket.on('room_state', (snapshot: RoomSnapshot) => {
+      const serverTime = typeof snapshot.serverTime === 'number' && Number.isFinite(snapshot.serverTime) ? snapshot.serverTime : Date.now();
+      setServerTimeOffset(serverTime - Date.now());
       setRoom(snapshot);
       setState(snapshot.state);
       setStatus('');
@@ -52,14 +59,27 @@ const OnlineGame = () => {
   }, [socket]);
 
   const createRoom = () => {
-    socket.emit('create_room', playerName);
+    if (!validatePlayerName(playerName)) {
+      setStatus('Pon tu nombre para jugar');
+      return;
+    }
+
+    socket.emit('create_room', playerName.trim());
   };
 
   const joinRoom = () => {
+    if (!validatePlayerName(playerName)) {
+      setStatus('Pon tu nombre para jugar');
+      return;
+    }
+
     const code = joinCode.trim().toUpperCase();
     if (code) {
-      socket.emit('join_room', code, playerName);
+      socket.emit('join_room', code, playerName.trim());
+      return;
     }
+
+    setStatus('Escribe el codigo de sala');
   };
 
   const sendGuess = (guessAngle: number) => {
@@ -70,8 +90,19 @@ const OnlineGame = () => {
   };
 
   if (!room) {
+    const playerNameRequired = status === 'Pon tu nombre para jugar' && !validatePlayerName(playerName);
+
     return (
-      <section className="w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
+      <section className="relative w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
+        <button
+          type="button"
+          onClick={onBack}
+          className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.12)] active:scale-95"
+          aria-label="Volver atras"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+
         <div className="mb-5 text-center">
           <h2 className="text-xl font-black uppercase tracking-[0.08em]">Sala online</h2>
           <p className="mt-1 text-sm font-semibold text-[#7b6f63]">{status}</p>
@@ -80,10 +111,19 @@ const OnlineGame = () => {
         <div className="flex flex-col gap-3">
           <input
             value={playerName}
-            onChange={(event) => setPlayerName(event.target.value)}
+            onChange={(event) => {
+              setPlayerName(event.target.value);
+              if (status === 'Pon tu nombre para jugar') {
+                setStatus('Conectado');
+              }
+            }}
             placeholder="Tu nombre"
             maxLength={18}
-            className="h-14 rounded-full border-2 border-[#d8d0c6] bg-[#f7f4ef] px-5 text-center text-base font-black outline-none focus:border-[#202a32]"
+            required
+            aria-invalid={playerNameRequired}
+            className={`h-14 rounded-full border-2 bg-[#f7f4ef] px-5 text-center text-base font-black outline-none focus:border-[#202a32] ${
+              playerNameRequired ? 'border-[#d63a31]' : 'border-[#d8d0c6]'
+            }`}
           />
 
           <ActionButton label="Crear sala" icon={<Link2 />} onClick={createRoom} />
@@ -114,23 +154,73 @@ const OnlineGame = () => {
   const visibleCoverOpen = state.roundResult ? true : isGuesser ? false : state.coverOpen;
   const myPlayerLabel = getPlayerLabel(room.round, room.role, room.names);
   const revealActive = Boolean(state.roundResult);
+  const headerStatus = state.guessLocked && !revealActive ? 'Respuesta fijada - ya se puede puntuar' : status;
+  const goBack = () => {
+    socket.emit('leave_room');
+    onBack();
+  };
+  const actionButtons = isGuesser ? (
+    <ActionButton
+      className="h-full w-full"
+      label={state.guessLocked ? 'Fijado' : 'Adivinar'}
+      icon={<EyeOff />}
+      onClick={() => socket.emit('lock_guess')}
+      variant="light"
+      disabled={state.guessLocked || revealActive}
+    />
+  ) : (
+    <>
+      <ActionButton
+        className="h-full w-full"
+        label="Girar"
+        icon={<RefreshCw className={state.isSpinning ? 'animate-spin' : ''} />}
+        onClick={() => socket.emit('spin')}
+        disabled={revealActive}
+      />
+      <ActionButton
+        className="h-full w-full"
+        label={state.coverOpen ? 'Tapar' : 'Ver'}
+        icon={state.coverOpen ? <EyeOff /> : <Eye />}
+        onClick={() => socket.emit('toggle_cover')}
+        disabled={revealActive}
+      />
+      <ActionButton
+        className="h-full w-full"
+        label="Puntuar"
+        icon={<Flag />}
+        onClick={() => socket.emit('finish_round')}
+        variant="light"
+        disabled={revealActive}
+      />
+    </>
+  );
 
   return (
-    <section className="flex h-full min-h-0 w-full max-w-[430px] flex-col items-center justify-between gap-2 overflow-hidden rounded-none bg-[#f7f4ef] px-1 py-1 sm:h-[720px] sm:max-h-[calc(100dvh-2.5rem)] sm:max-w-[520px] sm:rounded-[1.75rem] sm:px-6 sm:py-5 sm:shadow-[0_22px_60px_rgba(32,42,50,0.16)]">
-      <div className="grid w-full shrink-0 grid-cols-[3rem_1fr_3rem] items-start gap-2">
-        <div />
+    <section className="online-game-panel grid min-h-0 w-full max-w-[430px] grid-rows-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible rounded-none bg-[#f7f4ef] px-1 py-1 sm:max-w-[520px] sm:rounded-[1.75rem] sm:px-6 sm:py-5 sm:shadow-[0_22px_60px_rgba(32,42,50,0.16)]">
+      <div className="grid w-full shrink-0 grid-cols-[3rem_1fr_3rem] items-start gap-2 sm:grid-cols-[3.5rem_1fr_3.5rem]">
+        <button
+          type="button"
+          onClick={goBack}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.12)] active:scale-95 sm:h-14 sm:w-14"
+          aria-label="Volver atras"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <div className="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2">
-          <div className="max-w-full truncate rounded-full bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-[#52606a] shadow-[0_10px_22px_rgba(32,42,50,0.1)] sm:px-5 sm:text-sm sm:tracking-[0.14em]">
+          <div className="flex h-8 max-w-full items-center truncate rounded-full bg-white px-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#52606a] shadow-[0_10px_22px_rgba(32,42,50,0.1)] sm:h-9 sm:px-5 sm:text-sm sm:tracking-[0.14em]">
             Sala {room.code} - Ronda {room.round} - {room.players}/2
           </div>
-          <div className="max-w-full truncate rounded-full bg-[#202a32] px-4 py-2 text-[11px] font-black uppercase tracking-[0.1em] text-white shadow-[0_10px_22px_rgba(32,42,50,0.14)] sm:px-5 sm:text-xs sm:tracking-[0.14em]">
+          <div className="flex h-8 max-w-full items-center truncate rounded-full bg-[#202a32] px-4 text-[11px] font-black uppercase tracking-[0.1em] text-white shadow-[0_10px_22px_rgba(32,42,50,0.14)] sm:h-9 sm:px-5 sm:text-xs sm:tracking-[0.14em]">
             {myPlayerLabel} - {isGuesser ? 'Adivina' : 'Gira y mira'}
           </div>
-          {(status || state.guessLocked) && (
-            <div className="max-w-full truncate rounded-full bg-white px-4 py-2 text-[11px] font-bold text-[#7b6f63] shadow-[0_10px_20px_rgba(32,42,50,0.08)] sm:text-xs">
-              {state.guessLocked ? 'Respuesta fijada - ya se puede puntuar' : status}
-            </div>
-          )}
+          <div
+            className={`flex max-w-full items-center truncate rounded-full bg-white text-[10px] font-bold text-[#7b6f63] shadow-[0_10px_20px_rgba(32,42,50,0.08)] transition-all sm:h-8 sm:px-4 sm:text-xs ${
+              headerStatus ? 'h-7 px-4 opacity-100' : 'h-0 px-0 opacity-0 sm:opacity-0'
+            }`}
+            aria-hidden={!headerStatus}
+          >
+            {headerStatus || 'Sin avisos'}
+          </div>
         </div>
         <button
           type="button"
@@ -142,72 +232,45 @@ const OnlineGame = () => {
         </button>
       </div>
 
-      <div className="grid w-full max-w-sm shrink-0 grid-cols-2 gap-2 sm:gap-3">
-        <ScoreCard
-          active={room.round % 2 === 1}
-          highlight={state.roundResult?.scoredPlayer === 'player1' && state.roundResult.score > 0}
-          label={room.names.player1 ?? 'Persona 1'}
-          score={room.scores.player1}
-        />
-        <ScoreCard
-          active={room.round % 2 === 0}
-          highlight={state.roundResult?.scoredPlayer === 'player2' && state.roundResult.score > 0}
-          label={room.names.player2 ?? 'Persona 2'}
-          score={room.scores.player2}
-        />
-      </div>
-
-      <RoundHistory history={room.history} names={room.names} />
-
-      <Dial
-        canMovePointer={isGuesser && !revealActive}
-        coverOpen={visibleCoverOpen}
-        guessAngle={state.guessAngle}
-        isSpinning={state.isSpinning}
-        onGuessChange={sendGuess}
-        spinDurationMs={state.spinDurationMs}
-        wheelRotation={state.wheelRotation}
-      />
-
-      <div className={`grid w-full shrink-0 gap-2 ${isGuesser ? 'max-w-sm grid-cols-1' : 'max-w-md grid-cols-3'} sm:flex sm:h-16 sm:items-center sm:justify-center sm:gap-3`}>
-        {isGuesser ? (
-          <ActionButton
-            className="w-full"
-            label={state.guessLocked ? 'Fijado' : 'Adivinar'}
-            icon={<EyeOff />}
-            onClick={() => socket.emit('lock_guess')}
-            variant="light"
-            disabled={state.guessLocked || revealActive}
+      <div className="flex min-h-0 w-full flex-col items-center justify-between gap-2 overflow-visible">
+        <div className="grid w-full max-w-sm shrink-0 grid-cols-2 gap-2 sm:gap-3">
+          <ScoreCard
+            active={room.round % 2 === 1}
+            highlight={state.roundResult?.scoredPlayer === 'player1' && state.roundResult.score > 0}
+            label={room.names.player1 ?? 'Persona 1'}
+            score={room.scores.player1}
           />
-        ) : (
-          <>
-            <ActionButton
-              className="w-full"
-              label="Girar"
-              icon={<RefreshCw className={state.isSpinning ? 'animate-spin' : ''} />}
-              onClick={() => socket.emit('spin')}
-              disabled={revealActive}
-            />
-            <ActionButton
-              className="w-full"
-              label={state.coverOpen ? 'Tapar' : 'Ver'}
-              icon={state.coverOpen ? <EyeOff /> : <Eye />}
-              onClick={() => socket.emit('toggle_cover')}
-              disabled={revealActive}
-            />
-            <ActionButton
-              className="w-full"
-              label="Puntuar"
-              icon={<Flag />}
-              onClick={() => socket.emit('finish_round')}
-              variant="light"
-              disabled={revealActive}
-            />
-          </>
-        )}
+          <ScoreCard
+            active={room.round % 2 === 0}
+            highlight={state.roundResult?.scoredPlayer === 'player2' && state.roundResult.score > 0}
+            label={room.names.player2 ?? 'Persona 2'}
+            score={room.scores.player2}
+          />
+        </div>
+
+        <RoundHistory history={room.history} names={room.names} />
+
+        <Dial
+          canMovePointer={isGuesser && !revealActive}
+          className="online-dial"
+          coverOpen={visibleCoverOpen}
+          guessAngle={state.guessAngle}
+          isSpinning={state.isSpinning}
+          onGuessChange={sendGuess}
+          spinDurationMs={state.spinDurationMs}
+          wheelRotation={state.wheelRotation}
+        />
       </div>
 
-      {state.roundResult && <RoundResultOverlay names={room.names} result={state.roundResult} />}
+      <div
+        className={`grid h-12 w-full shrink-0 gap-2 self-end sm:h-14 sm:items-center sm:justify-center sm:gap-3 ${
+          isGuesser ? 'max-w-sm grid-cols-1' : 'max-w-md grid-cols-3'
+        }`}
+      >
+        {actionButtons}
+      </div>
+
+      {state.roundResult && <RoundResultOverlay names={room.names} result={state.roundResult} serverTimeOffset={serverTimeOffset} />}
     </section>
   );
 };
@@ -261,21 +324,28 @@ function getPlayerLabel(round: number, role: 'guesser' | 'spinner', names: RoomS
   return player1IsGuessing ? names.player2 ?? 'Persona 2' : names.player1 ?? 'Persona 1';
 }
 
+function validatePlayerName(playerName: string) {
+  return playerName.trim().length > 0;
+}
+
 const RoundResultOverlay = ({
   names,
   result,
+  serverTimeOffset,
 }: {
   names: RoomSnapshot['names'];
   result: NonNullable<GameSnapshot['roundResult']>;
+  serverTimeOffset: number;
 }) => {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(Date.now() + serverTimeOffset);
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 200);
+    const id = window.setInterval(() => setNow(Date.now() + serverTimeOffset), 200);
     return () => window.clearInterval(id);
-  }, []);
+  }, [serverTimeOffset]);
 
-  const secondsLeft = Math.max(1, Math.ceil((result.nextRoundAt - now) / 1000));
+  const rawSecondsLeft = Number.isFinite(result.nextRoundAt) ? Math.ceil((result.nextRoundAt - now) / 1000) : 3;
+  const secondsLeft = Math.min(3, Math.max(1, rawSecondsLeft));
   const playerName = names[result.scoredPlayer] ?? (result.scoredPlayer === 'player1' ? 'Persona 1' : 'Persona 2');
   const resultText = result.score > 0 ? `${playerName} suma ${result.score}` : `${playerName} no suma`;
   const theme = getScoreTheme(result.score);

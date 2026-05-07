@@ -14,6 +14,7 @@ const SPIN_DURATION_RANGE_MS = {
   max: 2600,
   min: 1300,
 };
+const ROUND_RESULT_DURATION_MS = 3000;
 const SCORE_THRESHOLDS = {
   one: 24,
   three: 6,
@@ -89,6 +90,11 @@ if (existsSync(indexPath)) {
 
 io.on('connection', (socket) => {
   socket.on('create_room', (playerName?: string) => {
+    if (!hasPlayerName(playerName)) {
+      socket.emit('room_error', 'Pon tu nombre para jugar');
+      return;
+    }
+
     const room = createRoom();
     joinRoom(socket, room, playerName);
     socket.join(room.code);
@@ -96,6 +102,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join_room', (code: string, playerName?: string) => {
+    if (!hasPlayerName(playerName)) {
+      socket.emit('room_error', 'Pon tu nombre para jugar');
+      return;
+    }
+
     const room = rooms.get(normalizeCode(code));
 
     if (!room) {
@@ -197,7 +208,7 @@ io.on('connection', (socket) => {
 
     const guesserSlot = getGuesserSlot(room);
     const score = calculateScore(room.state.wheelRotation, room.state.guessAngle);
-    const nextRoundAt = Date.now() + 3200;
+    const nextRoundAt = Date.now() + ROUND_RESULT_DURATION_MS;
 
     room.scores = {
       ...room.scores,
@@ -234,7 +245,7 @@ io.on('connection', (socket) => {
         roundResult: null,
       };
       emitRoom(room);
-    }, 3200);
+    }, ROUND_RESULT_DURATION_MS);
   });
 
   socket.on('leave_room', () => {
@@ -311,6 +322,8 @@ function getSocketRoom(socketId: string) {
 }
 
 function emitRoom(room: Room) {
+  const serverTime = Date.now();
+
   room.players.forEach((_slot, socketId) => {
     io.to(socketId).emit('room_state', {
       code: room.code,
@@ -320,6 +333,7 @@ function emitRoom(room: Room) {
       role: getRole(room, socketId),
       round: room.round,
       scores: room.scores,
+      serverTime,
       state: room.state,
     });
   });
@@ -365,4 +379,8 @@ function normalizePlayerName(playerName: string | undefined, slot: PlayerSlot) {
   if (!trimmed) return slot === 'player1' ? 'Persona 1' : 'Persona 2';
 
   return trimmed.slice(0, 18);
+}
+
+function hasPlayerName(playerName: string | undefined) {
+  return String(playerName ?? '').trim().length > 0;
 }

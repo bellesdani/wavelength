@@ -22,6 +22,7 @@ export interface RoomSnapshot {
   role: PlayerRole;
   round: number;
   scores: Scoreboard;
+  serverTime?: number;
   state: GameSnapshot;
 }
 
