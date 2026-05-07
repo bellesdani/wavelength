@@ -1,15 +1,23 @@
 import express from 'express';
+import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
+import path from 'node:path';
 import { Server } from 'socket.io';
 import type { Socket } from 'socket.io';
 
 const PORT = Number(process.env.PORT ?? 3001);
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN ?? (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000');
 const DEFAULT_SPIN_DURATION_MS = 1800;
 const MIN_EXTRA_TURNS = 4;
 const MAX_EXTRA_TURNS = 7;
 const SPIN_DURATION_RANGE_MS = {
   max: 2600,
   min: 1300,
+};
+const SCORE_THRESHOLDS = {
+  one: 24,
+  three: 6,
+  two: 14,
 };
 
 interface GameSnapshot {
@@ -61,17 +69,23 @@ const initialState = (): GameSnapshot => ({
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CLIENT_ORIGIN ?? 'http://localhost:3000',
-  },
-});
+const io = new Server(httpServer, CLIENT_ORIGIN ? { cors: { origin: CLIENT_ORIGIN } } : {});
 
 const rooms = new Map<string, Room>();
 
 app.get('/health', (_request, response) => {
   response.json({ ok: true });
 });
+
+const distPath = path.resolve(process.cwd(), 'dist');
+const indexPath = path.join(distPath, 'index.html');
+
+if (existsSync(indexPath)) {
+  app.use(express.static(distPath, { maxAge: '1y', index: false }));
+  app.get('*', (_request, response) => {
+    response.sendFile(indexPath);
+  });
+}
 
 io.on('connection', (socket) => {
   socket.on('create_room', (playerName?: string) => {
@@ -327,9 +341,9 @@ function calculateScore(wheelRotation: number, guessAngle: number) {
   const rawDifference = Math.abs(targetAngle - guessAngle);
   const difference = Math.min(rawDifference, 180 - rawDifference);
 
-  if (difference <= 7) return 3;
-  if (difference <= 17) return 2;
-  if (difference <= 29) return 1;
+  if (difference <= SCORE_THRESHOLDS.three) return 3;
+  if (difference <= SCORE_THRESHOLDS.two) return 2;
+  if (difference <= SCORE_THRESHOLDS.one) return 1;
   return 0;
 }
 

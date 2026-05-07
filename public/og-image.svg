@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">La Ruleta de TikTok</title>
+  <desc id="desc">Imagen social del juego La Ruleta de TikTok</desc>
+  <rect width="1200" height="630" fill="#e9ede8"/>
+  <rect x="76" y="70" width="1048" height="490" rx="42" fill="#f7f4ef"/>
+  <circle cx="335" cy="315" r="180" fill="#202a32"/>
+  <circle cx="335" cy="315" r="150" fill="#fffaf2"/>
+  <path d="M335 165a150 150 0 0 1 129.9 75L335 315Z" fill="#d63a31"/>
+  <path d="M464.9 240A150 150 0 0 1 335 465V315Z" fill="#f4d438"/>
+  <path d="M335 465A150 150 0 0 1 205.1 240L335 315Z" fill="#4f9d85"/>
+  <circle cx="335" cy="315" r="46" fill="#202a32"/>
+  <path d="M335 104 391 195H279Z" fill="#f28a2e"/>
+  <text x="565" y="245" fill="#202a32" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900" letter-spacing="1">
+    La Ruleta
+  </text>
+  <text x="565" y="327" fill="#202a32" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="900" letter-spacing="1">
+    de TikTok
+  </text>
+  <text x="568" y="392" fill="#7b6f63" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700">
+    Juego online gratis para dos personas
+  </text>
+  <rect x="568" y="430" width="278" height="56" rx="28" fill="#202a32"/>
+  <text x="608" y="468" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="900" letter-spacing="2">
+    GIRAR Y ADIVINAR
+  </text>
+</svg>

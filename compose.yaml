@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        VITE_SITE_URL: ${VITE_SITE_URL}
+        VITE_SOCKET_URL: ${VITE_SOCKET_URL:-}
+    environment:
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN}
+      NODE_ENV: production
+      PORT: 3001
+    expose:
+      - "3001"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - app
+    environment:
+      SITE_HOST: ${SITE_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_config:
+  caddy_data:

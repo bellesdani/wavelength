@@ -7,7 +7,7 @@ import Dial from './Dial';
 import type { GameSnapshot, PlayerSlot, RoomSnapshot, RoundHistoryEntry } from '../types/room';
 import { DEFAULT_SPIN_DURATION_MS } from '../types/room';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL ?? 'http://localhost:3001';
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 
 const initialState: GameSnapshot = {
   coverOpen: false,

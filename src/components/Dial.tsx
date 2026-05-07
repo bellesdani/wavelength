@@ -8,6 +8,11 @@ const BASE_TOP = CENTER;
 const SCORE_RADIUS = RADIUS - 2;
 const LABEL_RADIUS = RADIUS - 42;
 const POINTER_LENGTH = 128;
+const SCORE_THRESHOLDS = {
+  one: 24,
+  three: 6,
+  two: 14,
+};
 
 interface DialProps {
   canMovePointer?: boolean;
@@ -20,11 +25,11 @@ interface DialProps {
 }
 
 const scoreSlices = [
-  { color: '#f4d438', from: -29, to: -17, label: '1' },
-  { color: '#f28a2e', from: -17, to: -7, label: '2' },
-  { color: '#d63a31', from: -7, to: 7, label: '3' },
-  { color: '#f28a2e', from: 7, to: 17, label: '2' },
-  { color: '#f4d438', from: 17, to: 29, label: '1' },
+  { color: '#f4d438', from: -SCORE_THRESHOLDS.one, to: -SCORE_THRESHOLDS.two, label: '1' },
+  { color: '#f28a2e', from: -SCORE_THRESHOLDS.two, to: -SCORE_THRESHOLDS.three, label: '2' },
+  { color: '#d63a31', from: -SCORE_THRESHOLDS.three, to: SCORE_THRESHOLDS.three, label: '3' },
+  { color: '#f28a2e', from: SCORE_THRESHOLDS.three, to: SCORE_THRESHOLDS.two, label: '2' },
+  { color: '#f4d438', from: SCORE_THRESHOLDS.two, to: SCORE_THRESHOLDS.one, label: '1' },
 ];
 
 const Dial = ({
@@ -125,9 +130,6 @@ const Dial = ({
               <ScoreGroup rotation={0} />
               <ScoreGroup rotation={180} />
 
-              <rect x="52" y="196" width="296" height="8" fill="#111827" opacity="0.26" />
-              <rect x="52" y="198.5" width="296" height="3" fill="#ffffff" opacity="0.18" />
-
               <rect x="52" y="52" width="296" height="296" fill="url(#faceTexture)" />
             </g>
           </motion.g>
@@ -165,11 +167,11 @@ const Dial = ({
           <path d="M 98 260 L 302 260" stroke="#ffffff" strokeWidth="7" strokeLinecap="round" opacity="0.45" />
           <Screw x={116} y={286} />
           <Screw x={284} y={286} />
-          <text x="200" y="296" textAnchor="middle" fontSize="22" fontWeight="900" letterSpacing="1.4" fill="#202a32">
-            WAVELENGTH
+          <text x="200" y="296" textAnchor="middle" fontSize="20" fontWeight="900" letterSpacing="1.2" fill="#202a32">
+            LA RULETA
           </text>
-          <text x="200" y="316" textAnchor="middle" fontSize="12" fontWeight="900" letterSpacing="3" fill="#52606a">
-            MINI
+          <text x="200" y="316" textAnchor="middle" fontSize="12" fontWeight="900" letterSpacing="2.2" fill="#52606a">
+            DE TIKTOK
           </text>
           <path d="M 116 334 Q 200 348 284 334" stroke="#7d8a92" strokeWidth="5" strokeLinecap="round" opacity="0.45" />
           <path d="M 14 204 L 386 204" stroke="#202a32" strokeWidth="9" strokeLinecap="round" />
@@ -256,7 +258,9 @@ const ScoreGroup = ({ rotation }: { rotation: 0 | 180 }) => {
       {scoreSlices.map((slice, index) => {
         const start = rotation + slice.from;
         const end = rotation + slice.to;
-        const labelPoint = polarToCartesian(CENTER, CENTER, LABEL_RADIUS, (start + end) / 2);
+        const labelAngle = (start + end) / 2;
+        const labelPoint = polarToCartesian(CENTER, CENTER, LABEL_RADIUS, labelAngle);
+        const labelRotation = labelAngle + 90;
 
         return (
           <g key={`${rotation}-${index}`}>
@@ -264,15 +268,17 @@ const ScoreGroup = ({ rotation }: { rotation: 0 | 180 }) => {
               d={describeSector(CENTER, CENTER, SCORE_RADIUS, start, end)}
               fill={slice.color}
               stroke="#47535c"
-              strokeWidth="1.8"
+              strokeWidth="1.1"
             />
             <text
               x={labelPoint.x}
-              y={labelPoint.y + 7}
+              y={labelPoint.y + 5}
               textAnchor="middle"
-              fontSize="25"
+              dominantBaseline="middle"
+              fontSize="19"
               fontWeight="900"
               fill={slice.label === '3' ? '#ffffff' : '#3b2f1b'}
+              transform={`rotate(${labelRotation} ${labelPoint.x} ${labelPoint.y})`}
             >
               {slice.label}
             </text>

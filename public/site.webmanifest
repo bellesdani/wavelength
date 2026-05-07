@@ -1,0 +1,20 @@
+{
+  "name": "La Ruleta de TikTok",
+  "short_name": "Ruleta TikTok",
+  "description": "Juego online gratis para dos personas: gira la ruleta, tapa el resultado y adivina donde ha caido.",
+  "lang": "es",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e9ede8",
+  "theme_color": "#e9ede8",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "entertainment"]
+}
