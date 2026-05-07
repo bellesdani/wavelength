@@ -133,7 +133,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
               value={joinCode}
               onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
               placeholder="CODIGO"
-              maxLength={4}
+              maxLength={6}
               className="h-14 min-w-0 flex-1 rounded-full border-2 border-[#d8d0c6] bg-[#f7f4ef] px-5 text-center text-lg font-black uppercase tracking-[0.2em] outline-none focus:border-[#202a32]"
             />
             <button
