@@ -29,4 +29,4 @@ COPY --from=build /app/build ./build
 
 EXPOSE 3001
 
-CMD ["node", "build/index.js"]
+CMD ["node", "build/server/index.js"]
