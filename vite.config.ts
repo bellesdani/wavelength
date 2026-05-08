@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig, loadEnv} from 'vite';
 
-const DEFAULT_SITE_URL = 'https://la-ruleta-de-tiktok.com';
+const DEFAULT_SITE_URL = 'https://laruletadetiktok.com';
 
 function normalizeSiteUrl(value: string | undefined) {
   return (value || DEFAULT_SITE_URL).replace(/\/+$/, '');
@@ -14,7 +14,7 @@ export default defineConfig(({mode}) => {
   const siteUrl = normalizeSiteUrl(env.VITE_SITE_URL);
 
   return {
-    plugins: [react(), tailwindcss(), seoFilesPlugin(siteUrl)],
+    plugins: [react(), tailwindcss(), seoFilesPlugin(siteUrl), inlineSmallCssPlugin()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
     },
@@ -30,6 +30,47 @@ export default defineConfig(({mode}) => {
     },
   };
 });
+
+function inlineSmallCssPlugin() {
+  const maxInlineBytes = 30 * 1024;
+
+  return {
+    name: 'la-ruleta-inline-small-css',
+    enforce: 'post' as const,
+    generateBundle(_options, bundle) {
+      const htmlAsset = bundle['index.html'];
+
+      if (!htmlAsset || htmlAsset.type !== 'asset') {
+        return;
+      }
+
+      let html = String(htmlAsset.source);
+      const stylesheetLinkPattern = /<link\b(?=[^>]*\brel=["']stylesheet["'])(?=[^>]*\bhref=["']([^"']+\.css)["'])[^>]*>/g;
+      const stylesheetLinks = Array.from(html.matchAll(stylesheetLinkPattern));
+
+      for (const match of stylesheetLinks) {
+        const [linkTag, href] = match;
+        const fileName = href.replace(/^\//, '');
+        const cssAsset = bundle[fileName];
+
+        if (!cssAsset || cssAsset.type !== 'asset') {
+          continue;
+        }
+
+        const css = String(cssAsset.source);
+
+        if (Buffer.byteLength(css, 'utf8') > maxInlineBytes) {
+          continue;
+        }
+
+        html = html.replace(linkTag, `<style>${css.replace(/<\/style/gi, '<\\/style')}</style>`);
+        delete bundle[fileName];
+      }
+
+      htmlAsset.source = html;
+    },
+  };
+}
 
 function seoFilesPlugin(siteUrl: string) {
   return {

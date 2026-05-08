@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang="es" class="notranslate" translate="no">
   <head>
-    <!-- Google Tag Manager -->
+    <!-- Google Tag Manager: delayed so the game shell paints first on mobile. -->
     <script>
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+      (function(w,d,s,l,i){var loaded=false;function loadGtm(){if(loaded)return;loaded=true;w[l]=w[l]||[];w[l].push({'gtm.start':
       new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
       j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);}
+      function loadAfterFirstPaint(){w.setTimeout(loadGtm,3500);}
+      ['pointerdown','keydown','touchstart','scroll'].forEach(function(e){w.addEventListener(e,loadGtm,{once:true,passive:true});});
+      if(d.readyState==='complete'){loadAfterFirstPaint();}else{w.addEventListener('load',loadAfterFirstPaint,{once:true});}
       })(window,document,'script','dataLayer','GTM-W4JDN6ND');
     </script>
     <!-- End Google Tag Manager -->
@@ -102,7 +105,42 @@
         <p>Activa JavaScript para jugar en modo local u online.</p>
       </main>
     </noscript>
-    <div id="root"></div>
+    <div id="root">
+      <main class="h-dvh overflow-hidden bg-[#f7f4ef] text-[#202a32] sm:bg-[#e9ede8]" aria-label="La Ruleta de TikTok">
+        <div class="mx-auto flex h-full w-full max-w-6xl items-center justify-center p-3 sm:p-5">
+          <section class="w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
+            <h1 class="text-2xl font-black uppercase tracking-[0.08em]">La Ruleta de TikTok</h1>
+            <p class="mt-2 text-sm font-semibold text-[#7b6f63]">Elige como jugar</p>
+
+            <div class="mt-6 flex flex-col gap-3">
+              <button
+                type="button"
+                class="flex h-12 min-w-0 items-center justify-center gap-2 rounded-full bg-[#202a32] px-4 text-xs font-black uppercase tracking-[0.06em] text-white shadow-[0_12px_24px_rgba(15,23,42,0.14)] transition active:scale-95 disabled:active:scale-100 sm:h-14 sm:min-w-32 sm:gap-3 sm:px-6 sm:text-sm"
+              >
+                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect width="20" height="14" x="2" y="3" rx="2" />
+                  <line x1="8" x2="16" y1="21" y2="21" />
+                  <line x1="12" x2="12" y1="17" y2="21" />
+                </svg>
+                <span class="truncate">Local</span>
+              </button>
+              <button
+                type="button"
+                class="flex h-12 min-w-0 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black uppercase tracking-[0.06em] text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.14)] transition active:scale-95 disabled:active:scale-100 sm:h-14 sm:min-w-32 sm:gap-3 sm:px-6 sm:text-sm"
+              >
+                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 20h.01" />
+                  <path d="M2 8.82a15 15 0 0 1 20 0" />
+                  <path d="M5 12.86a10 10 0 0 1 14 0" />
+                  <path d="M8.5 16.43a5 5 0 0 1 7 0" />
+                </svg>
+                <span class="truncate">Online</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
