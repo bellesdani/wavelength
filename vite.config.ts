@@ -80,7 +80,7 @@ function seoFilesPlugin(siteUrl: string) {
         fileName: 'robots.txt',
         source: [
           'User-agent: *',
-          'Allow: /',
+          'Disallow:',
           '',
           `Sitemap: ${siteUrl}/sitemap.xml`,
           '',
