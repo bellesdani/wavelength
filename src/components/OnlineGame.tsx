@@ -93,18 +93,18 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
     const playerNameRequired = status === 'Pon tu nombre para jugar' && !validatePlayerName(playerName);
 
     return (
-      <section className="relative w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
+      <section className="app-panel relative w-full max-w-sm rounded-lg p-5 backdrop-blur sm:p-6">
         <button
           type="button"
           onClick={onBack}
-          className="absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.12)] active:scale-95"
+          className="icon-button absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-lg text-[#17222b] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
           aria-label="Volver atras"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
 
         <div className="mb-5 text-center">
-          <h2 className="text-xl font-black uppercase tracking-[0.08em]">Sala online</h2>
+          <h2 className="text-xl font-black uppercase text-[#17222b]">Sala online</h2>
           <p className="mt-1 text-sm font-semibold text-[#7b6f63]">{status}</p>
         </div>
 
@@ -121,7 +121,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
             maxLength={18}
             required
             aria-invalid={playerNameRequired}
-            className={`h-14 rounded-full border-2 bg-[#f7f4ef] px-5 text-center text-base font-black outline-none focus:border-[#202a32] ${
+            className={`form-field h-14 rounded-lg border-2 px-5 text-center text-base font-black text-[#17222b] outline-none transition focus:border-[#17222b] ${
               playerNameRequired ? 'border-[#d63a31]' : 'border-[#d8d0c6]'
             }`}
           />
@@ -134,12 +134,12 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
               onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
               placeholder="CODIGO"
               maxLength={6}
-              className="h-14 min-w-0 flex-1 rounded-full border-2 border-[#d8d0c6] bg-[#f7f4ef] px-5 text-center text-lg font-black uppercase tracking-[0.2em] outline-none focus:border-[#202a32]"
+              className="form-field h-14 min-w-0 flex-1 rounded-lg border-2 border-[#d8d0c6] px-5 text-center text-lg font-black uppercase text-[#17222b] outline-none transition focus:border-[#17222b]"
             />
             <button
               type="button"
               onClick={joinRoom}
-              className="h-14 w-14 rounded-full bg-[#202a32] text-white flex items-center justify-center shadow-[0_14px_28px_rgba(15,23,42,0.16)] active:scale-95"
+              className="flex h-14 w-14 items-center justify-center rounded-lg bg-[#17222b] text-white shadow-[0_14px_28px_rgba(23,34,43,0.16)] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
               aria-label="Entrar"
             >
               <DoorOpen className="h-5 w-5" />
@@ -196,25 +196,25 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
   );
 
   return (
-    <section className="online-game-panel grid min-h-0 w-full max-w-[430px] grid-rows-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible rounded-none bg-[#f7f4ef] px-1 py-1 sm:max-w-[520px] sm:rounded-[1.75rem] sm:px-6 sm:py-5 sm:shadow-[0_22px_60px_rgba(32,42,50,0.16)]">
+    <section className="app-panel online-game-panel game-surface grid min-h-0 w-full max-w-[430px] grid-rows-[auto_minmax(0,1fr)_auto] items-center gap-2 overflow-visible rounded-none px-1 py-1 sm:max-w-[560px] sm:rounded-lg sm:px-6 sm:py-5">
       <div className="grid w-full shrink-0 grid-cols-[3rem_1fr_3rem] items-start gap-2 sm:grid-cols-[3.5rem_1fr_3.5rem]">
         <button
           type="button"
           onClick={goBack}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.12)] active:scale-95 sm:h-14 sm:w-14"
+          className="icon-button flex h-12 w-12 items-center justify-center rounded-lg text-[#17222b] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] sm:h-14 sm:w-14"
           aria-label="Volver atras"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2">
-          <div className="flex h-8 max-w-full items-center truncate rounded-full bg-white px-4 text-[11px] font-black uppercase tracking-[0.1em] text-[#52606a] shadow-[0_10px_22px_rgba(32,42,50,0.1)] sm:h-9 sm:px-5 sm:text-sm sm:tracking-[0.14em]">
+          <div className="status-chip flex h-8 max-w-full items-center truncate rounded-lg px-4 text-[11px] font-black uppercase text-[#52606a] sm:h-9 sm:px-5 sm:text-sm">
             Sala {room.code} - Ronda {room.round} - {room.players}/2
           </div>
-          <div className="flex h-8 max-w-full items-center truncate rounded-full bg-[#202a32] px-4 text-[11px] font-black uppercase tracking-[0.1em] text-white shadow-[0_10px_22px_rgba(32,42,50,0.14)] sm:h-9 sm:px-5 sm:text-xs sm:tracking-[0.14em]">
+          <div className="status-chip-dark flex h-8 max-w-full items-center truncate rounded-lg px-4 text-[11px] font-black uppercase text-white sm:h-9 sm:px-5 sm:text-xs">
             {myPlayerLabel} - {isGuesser ? 'Adivina' : 'Gira y mira'}
           </div>
           <div
-            className={`flex max-w-full items-center truncate rounded-full bg-white text-[10px] font-bold text-[#7b6f63] shadow-[0_10px_20px_rgba(32,42,50,0.08)] transition-all sm:h-8 sm:px-4 sm:text-xs ${
+            className={`status-chip flex max-w-full items-center truncate rounded-lg text-[10px] font-bold text-[#7b6f63] transition-all sm:h-8 sm:px-4 sm:text-xs ${
               headerStatus ? 'h-7 px-4 opacity-100' : 'h-0 px-0 opacity-0 sm:opacity-0'
             }`}
             aria-hidden={!headerStatus}
@@ -225,14 +225,14 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
         <button
           type="button"
           onClick={() => socket.emit('leave_room')}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.12)] active:scale-95 sm:h-14 sm:w-14"
+          className="icon-button flex h-12 w-12 items-center justify-center rounded-lg text-[#17222b] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] sm:h-14 sm:w-14"
           aria-label="Salir de la sala"
         >
           <Unplug className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="flex min-h-0 w-full flex-col items-center justify-between gap-2 overflow-visible">
+      <div className="flex min-h-0 w-full flex-col items-center justify-center gap-1 overflow-visible sm:justify-between sm:gap-2">
         <div className="grid w-full max-w-sm shrink-0 grid-cols-2 gap-2 sm:gap-3">
           <ScoreCard
             active={room.round % 2 === 1}
@@ -263,7 +263,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
       </div>
 
       <div
-        className={`grid h-12 w-full shrink-0 gap-2 self-end sm:h-14 sm:items-center sm:justify-center sm:gap-3 ${
+        className={`mx-auto grid h-12 w-full shrink-0 justify-self-center gap-2 self-end sm:h-14 sm:items-center sm:justify-center sm:gap-3 ${
           isGuesser ? 'max-w-sm grid-cols-1' : 'max-w-md grid-cols-3'
         }`}
       >
@@ -277,11 +277,11 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
 
 const ScoreCard = ({ active, highlight, label, score }: { active: boolean; highlight?: boolean; label: string; score: number }) => (
   <div
-    className={`rounded-[1rem] px-3 py-2 text-center shadow-[0_10px_22px_rgba(32,42,50,0.1)] sm:rounded-[1.25rem] sm:px-4 sm:py-3 ${
-      active ? 'bg-[#202a32] text-white' : 'bg-white text-[#202a32]'
+    className={`rounded-lg px-3 py-2 text-center shadow-[0_10px_22px_rgba(23,34,43,0.1)] sm:px-4 sm:py-3 ${
+      active ? 'bg-[#17222b] text-white' : 'status-chip text-[#17222b]'
     } ${highlight ? 'animate-score-pop' : ''}`}
   >
-    <div className="truncate text-[10px] font-black uppercase tracking-[0.1em] opacity-70 sm:text-[11px] sm:tracking-[0.12em]">{label}</div>
+    <div className="truncate text-[10px] font-black uppercase opacity-70 sm:text-[11px]">{label}</div>
     <div className="mt-1 text-2xl font-black leading-none sm:text-3xl">{score}</div>
   </div>
 );
@@ -302,7 +302,7 @@ const RoundHistory = ({ history, names }: { history: RoundHistoryEntry[]; names:
         return (
           <div
             key={`${entry.round}-${entry.scoredPlayer}`}
-            className={`flex h-7 min-w-0 items-center gap-1 rounded-full px-2 text-[10px] font-black uppercase tracking-[0.08em] shadow-[0_8px_16px_rgba(32,42,50,0.08)] sm:px-3 ${theme.history}`}
+            className={`flex h-7 min-w-0 items-center gap-1 rounded-lg px-2 text-[10px] font-black uppercase shadow-[0_8px_16px_rgba(32,42,50,0.08)] sm:px-3 ${theme.history}`}
             aria-label={`Ronda ${entry.round}: ${playerName} suma ${entry.score}`}
           >
             <span className="hidden max-w-16 truncate sm:inline">{playerName}</span>
@@ -351,16 +351,16 @@ const RoundResultOverlay = ({
   const theme = getScoreTheme(result.score);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-center px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pointer-events-auto sm:inset-0 sm:items-center sm:bg-[#202a32]/20 sm:px-5 sm:pb-0 sm:backdrop-blur-[2px]">
-      <div className={`animate-reveal-pop relative w-full max-w-sm overflow-hidden rounded-[1.25rem] px-4 py-3 shadow-[0_18px_42px_rgba(32,42,50,0.22)] sm:max-w-xs sm:rounded-[1.75rem] sm:p-6 sm:text-center sm:shadow-[0_24px_60px_rgba(32,42,50,0.22)] ${theme.panel}`}>
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex items-end justify-center px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pointer-events-auto sm:inset-0 sm:items-center sm:bg-[#17222b]/22 sm:px-5 sm:pb-0 sm:backdrop-blur-[2px]">
+      <div className={`animate-reveal-pop relative w-full max-w-sm overflow-hidden rounded-lg px-4 py-3 shadow-[0_18px_42px_rgba(23,34,43,0.22)] sm:max-w-xs sm:p-6 sm:text-center sm:shadow-[0_24px_60px_rgba(23,34,43,0.22)] ${theme.panel}`}>
         <div className={`absolute inset-x-0 top-0 h-1 ${theme.bar}`} />
         <div className="flex items-center justify-between gap-4 sm:block">
           <div className="min-w-0 text-left sm:text-center">
-            <div className={`mb-1 text-[10px] font-black uppercase tracking-[0.16em] sm:text-xs ${theme.kicker}`}>{theme.title}</div>
-            <div className={`truncate text-xs font-black uppercase tracking-[0.14em] sm:text-sm sm:tracking-[0.18em] ${theme.text}`}>
+            <div className={`mb-1 text-[10px] font-black uppercase sm:text-xs ${theme.kicker}`}>{theme.title}</div>
+            <div className={`truncate text-xs font-black uppercase sm:text-sm ${theme.text}`}>
               {resultText}
             </div>
-            <div className={`mt-1 rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.08em] sm:mt-4 sm:px-4 sm:py-3 sm:text-sm sm:tracking-[0.12em] ${theme.timer}`}>
+            <div className={`mt-1 rounded-lg px-3 py-2 text-xs font-black uppercase sm:mt-4 sm:px-4 sm:py-3 sm:text-sm ${theme.timer}`}>
               Siguiente ronda en {secondsLeft}...
             </div>
           </div>

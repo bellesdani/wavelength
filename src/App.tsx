@@ -1,6 +1,7 @@
-import { Monitor, Wifi } from 'lucide-react';
-import { Suspense, lazy, useState } from 'react';
-import ActionButton from './components/ActionButton';
+import { Monitor, ShieldCheck, Sparkles, Trophy, Wifi } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useState } from 'react';
+import Dial from './components/Dial';
 
 type Mode = 'menu' | 'local' | 'online';
 
@@ -9,18 +10,69 @@ const OnlineGame = lazy(() => import('./components/OnlineGame'));
 
 const App = () => {
   const [mode, setMode] = useState<Mode>('menu');
+  const [homeCoverOpen, setHomeCoverOpen] = useState(false);
+  const [homeWheelRotation, setHomeWheelRotation] = useState(22);
+  const [homeWheelMoving, setHomeWheelMoving] = useState(false);
+
+  useEffect(() => {
+    const moveTimer = window.setTimeout(() => {
+      setHomeWheelMoving(true);
+      setHomeWheelRotation(382);
+    }, 180);
+    const openTimer = window.setTimeout(() => setHomeCoverOpen(true), 980);
+    const doneTimer = window.setTimeout(() => setHomeWheelMoving(false), 1500);
+
+    return () => {
+      window.clearTimeout(moveTimer);
+      window.clearTimeout(openTimer);
+      window.clearTimeout(doneTimer);
+    };
+  }, []);
 
   return (
-    <main className="h-dvh overflow-hidden bg-[#f7f4ef] text-[#202a32] sm:bg-[#e9ede8]" aria-label="La Ruleta de TikTok">
-      <div className="mx-auto flex h-full w-full max-w-6xl items-center justify-center p-3 sm:p-5">
+    <main className="app-root app-background" aria-label="La Ruleta de TikTok">
+      <div className="app-frame">
         {mode === 'menu' && (
-          <section className="w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
-            <h1 className="text-2xl font-black uppercase tracking-[0.08em]">La Ruleta de TikTok</h1>
-            <p className="mt-2 text-sm font-semibold text-[#7b6f63]">Elige como jugar</p>
+          <section className="home-shell">
+            <div className="home-copy">
+              <div>
+                <div className="home-kicker">
+                  <Sparkles />
+                  Party game
+                </div>
+                <h1 className="home-title">
+                  La Ruleta<br />de TikTok
+                </h1>
+                <div className="home-pills">
+                  <TrustPill icon={<Trophy />} label="Rondas rapidas" />
+                  <TrustPill icon={<ShieldCheck />} label="Listo para sala" />
+                </div>
+              </div>
 
-            <div className="mt-6 flex flex-col gap-3">
-              <ActionButton label="Local" icon={<Monitor />} onClick={() => setMode('local')} />
-              <ActionButton label="Online" icon={<Wifi />} onClick={() => setMode('online')} variant="light" />
+              <div className="home-actions">
+                <button type="button" className="home-button home-button-primary" onClick={() => setMode('local')}>
+                  <Monitor />
+                  <span>Local</span>
+                </button>
+                <button type="button" className="home-button home-button-secondary" onClick={() => setMode('online')}>
+                  <Wifi />
+                  <span>Online</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="home-wheel-stage">
+              <div className="home-wheel-shadow" />
+              <Dial
+                canMovePointer={false}
+                className="home-wheel"
+                coverOpen={homeCoverOpen}
+                guessAngle={96}
+                isSpinning={homeWheelMoving}
+                onGuessChange={() => undefined}
+                spinDurationMs={940}
+                wheelRotation={homeWheelRotation}
+              />
             </div>
           </section>
         )}
@@ -41,9 +93,16 @@ const App = () => {
 };
 
 const LoadingPanel = () => (
-  <section className="w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
-    <div className="text-sm font-black uppercase tracking-[0.08em] text-[#52606a]">Cargando...</div>
+  <section className="app-panel w-full max-w-sm rounded-lg p-5 text-center backdrop-blur sm:p-6">
+    <div className="text-sm font-black uppercase text-[#52606a]">Cargando...</div>
   </section>
+);
+
+const TrustPill = ({ icon, label }: { icon: ReactNode; label: string }) => (
+  <div className="home-pill">
+    {icon}
+    <span>{label}</span>
+  </div>
 );
 
 export default App;

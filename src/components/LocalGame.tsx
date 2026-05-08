@@ -48,17 +48,17 @@ const LocalGame = ({ onBack }: LocalGameProps) => {
   };
 
   return (
-    <section className="flex h-full min-h-0 w-full max-w-[430px] flex-col items-center justify-between gap-2 overflow-hidden rounded-none bg-[#f7f4ef] px-1 py-1 sm:h-[720px] sm:max-h-[calc(100dvh-2.5rem)] sm:max-w-[520px] sm:rounded-[1.75rem] sm:px-6 sm:py-5 sm:shadow-[0_22px_60px_rgba(32,42,50,0.16)]">
+    <section className="app-panel game-surface flex h-full min-h-0 w-full max-w-[430px] flex-col items-center justify-between gap-2 overflow-hidden rounded-none px-1 py-1 sm:h-[720px] sm:max-h-[calc(100dvh-2.5rem)] sm:max-w-[560px] sm:rounded-lg sm:px-6 sm:py-5">
       <div className="grid w-full shrink-0 grid-cols-[3rem_1fr_3rem] items-start gap-2 sm:grid-cols-[3.5rem_1fr_3.5rem]">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.12)] active:scale-95 sm:h-14 sm:w-14"
+          className="icon-button flex h-12 w-12 items-center justify-center rounded-lg text-[#17222b] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] sm:h-14 sm:w-14"
           aria-label="Volver atras"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="max-w-full shrink-0 truncate rounded-full bg-white px-4 py-2 text-center text-[11px] font-black uppercase tracking-[0.1em] text-[#52606a] shadow-[0_10px_22px_rgba(32,42,50,0.1)] sm:px-5 sm:text-xs sm:tracking-[0.14em]">
+        <div className="status-chip max-w-full shrink-0 truncate rounded-lg px-4 py-2 text-center text-[11px] font-black uppercase text-[#52606a] sm:px-5 sm:text-xs">
           Persona 1 adivina - Persona 2 gira
         </div>
         <div />

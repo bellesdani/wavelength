@@ -19,22 +19,276 @@
     <title>La Ruleta de TikTok - Juego online gratis para amigos y pareja</title>
     <meta
       name="description"
-      content="La Ruleta viral de TikTok es un juego gratis para dos personas: gira la ruleta, oculta el resultado y reta a tu amigo o pareja a adivinar donde ha caido."
+      content="La Ruleta Viral de TikTok es un juego gratis para dos personas: gira la ruleta, oculta el resultado y reta a tu amigo o pareja a adivinar donde ha caido."
     />
     <meta
       name="keywords"
-      content="La Ruleta de TikTok, ruleta TikTok, juego TikTok, ruleta viral de tiktok, juego para amigos, juego para parejas, juego online gratis, ruleta online, juego para dos personas"
+      content="La Ruleta Viral de TikTok, ruleta TikTok, juego TikTok, ruleta viral de tiktok, juego para amigos, juego para parejas, juego online gratis, ruleta online, juego para dos personas"
     />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="author" content="La Ruleta de TikTok" />
-    <meta name="creator" content="La Ruleta de TikTok" />
-    <meta name="publisher" content="La Ruleta de TikTok" />
-    <meta name="application-name" content="La Ruleta de TikTok" />
+    <meta name="author" content="La Ruleta Viral de TikTok" />
+    <meta name="creator" content="La Ruleta Viral de TikTok" />
+    <meta name="publisher" content="La Ruleta Viral de TikTok" />
+    <meta name="application-name" content="La Ruleta Viral de TikTok" />
     <meta name="theme-color" content="#e9ede8" />
     <meta name="color-scheme" content="light" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="La Ruleta de TikTok" />
+    <meta name="apple-mobile-web-app-title" content="La Ruleta Viral de TikTok" />
+    <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #ecefe7;
+        color: #17222b;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      .app-root {
+        position: relative;
+        height: 100dvh;
+        overflow: hidden;
+        color: #17222b;
+      }
+
+      .app-frame {
+        position: relative;
+        display: flex;
+        width: 100%;
+        height: 100%;
+        max-width: 72rem;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+        margin: 0 auto;
+        box-sizing: border-box;
+      }
+
+      .app-background {
+        background:
+          radial-gradient(circle at 14% 12%, rgba(244, 212, 56, 0.26), transparent 24rem),
+          radial-gradient(circle at 86% 16%, rgba(214, 58, 49, 0.16), transparent 22rem),
+          linear-gradient(135deg, #fbf4e9 0%, #eef1e8 46%, #e0ebe7 100%);
+      }
+
+      .app-background::before {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        content: "";
+        background-image:
+          linear-gradient(rgba(23, 34, 43, 0.045) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(23, 34, 43, 0.04) 1px, transparent 1px);
+        background-size: 56px 56px;
+      }
+
+      .home-shell {
+        display: grid;
+        width: 100%;
+        max-width: 64rem;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: rgba(255, 250, 241, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.78);
+        border-radius: 8px;
+        box-shadow:
+          0 28px 80px rgba(23, 34, 43, 0.16),
+          inset 0 1px 0 rgba(255, 255, 255, 0.72);
+        box-sizing: border-box;
+      }
+
+      .home-copy {
+        display: flex;
+        min-height: 0;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 1.5rem;
+        text-align: left;
+      }
+
+      .home-kicker,
+      .home-pill {
+        display: inline-flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.86);
+        border: 1px solid rgba(217, 222, 216, 0.85);
+        border-radius: 8px;
+        color: #52606a;
+        font-size: 11px;
+        font-weight: 900;
+        text-transform: uppercase;
+        box-shadow: 0 10px 22px rgba(23, 34, 43, 0.08);
+      }
+
+      .home-kicker {
+        height: 36px;
+        padding: 0 12px;
+        margin-bottom: 16px;
+      }
+
+      .home-title {
+        max-width: 9ch;
+        margin: 0;
+        color: #17222b;
+        font-size: clamp(2.35rem, 8vw, 5rem);
+        font-weight: 900;
+        line-height: 0.88;
+        text-transform: uppercase;
+      }
+
+      .home-pills {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        max-width: 28rem;
+        margin-top: 24px;
+      }
+
+      .home-pill {
+        padding: 8px 12px;
+      }
+
+      .home-pill span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .home-actions {
+        display: grid;
+        gap: 12px;
+      }
+
+      .home-button {
+        display: flex;
+        min-width: 0;
+        height: 48px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 900;
+        text-transform: uppercase;
+        box-shadow: 0 14px 28px rgba(23, 34, 43, 0.14);
+      }
+
+      .home-button svg,
+      .home-kicker svg,
+      .home-pill svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+      }
+
+      .home-button-primary {
+        color: white;
+        background: #17222b;
+      }
+
+      .home-button-secondary {
+        color: #17222b;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .home-wheel-stage {
+        position: relative;
+        width: 100%;
+        max-width: 26.25rem;
+        margin: 0 auto;
+      }
+
+      .home-wheel-shadow {
+        position: absolute;
+        right: 2.5rem;
+        bottom: 0.5rem;
+        left: 2.5rem;
+        height: 3rem;
+        background: rgba(23, 34, 43, 0.16);
+        border-radius: 9999px;
+        filter: blur(16px);
+      }
+
+      .critical-wheel-placeholder {
+        position: relative;
+        width: min(100%, 360px);
+        aspect-ratio: 1 / 0.92;
+        margin: 0 auto;
+        border-radius: 9999px;
+        opacity: 0.001;
+      }
+
+      @media (min-width: 640px) {
+        .app-frame {
+          padding: 1.25rem;
+        }
+
+        .home-actions {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          max-width: 28rem;
+        }
+
+        .home-button {
+          height: 56px;
+          min-width: 128px;
+          gap: 12px;
+          padding: 0 24px;
+          font-size: 14px;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .home-shell {
+          grid-template-columns: 1fr 0.92fr;
+          gap: 1.75rem;
+          padding: 1.75rem;
+        }
+
+        .home-wheel-stage {
+          max-width: none;
+        }
+      }
+
+      @media (max-width: 767px) and (max-height: 700px) {
+        .home-shell {
+          gap: 0.5rem;
+          padding: 0.75rem;
+        }
+
+        .home-kicker {
+          margin-bottom: 0.75rem;
+        }
+
+        .home-title {
+          font-size: 2.1rem;
+        }
+
+        .home-pills {
+          display: none;
+        }
+
+        .home-copy {
+          gap: 1rem;
+        }
+
+        .home-wheel-stage {
+          max-width: 19rem;
+        }
+      }
+
+    </style>
     <link rel="canonical" href="__SITE_URL__/" />
     <link rel="alternate" href="__SITE_URL__/" hreflang="es" />
     <link rel="alternate" href="__SITE_URL__/" hreflang="x-default" />
@@ -42,8 +296,8 @@
     <link rel="manifest" href="/site.webmanifest" />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_ES" />
-    <meta property="og:site_name" content="La Ruleta de TikTok" />
-    <meta property="og:title" content="La Ruleta de TikTok - Juego online gratis para amigos" />
+    <meta property="og:site_name" content="La Ruleta Viral de TikTok" />
+    <meta property="og:title" content="La Ruleta Viral de TikTok - Juego online gratis para amigos" />
     <meta
       property="og:description"
       content="Gira la ruleta, tapa el resultado y reta a otra persona a adivinar donde ha caido. Juega gratis en modo local u online."
@@ -53,9 +307,9 @@
     <meta property="og:image:type" content="image/svg+xml" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="La Ruleta de TikTok, juego de ruleta para dos personas" />
+    <meta property="og:image:alt" content="La Ruleta Viral de TikTok, juego de ruleta para dos personas" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="La Ruleta de TikTok - Juego online gratis para amigos y parejas" />
+    <meta name="twitter:title" content="La Ruleta Viral de TikTok - Juego online gratis para amigos y parejas" />
     <meta
       name="twitter:description"
       content="Un juego rapido para dos personas: una gira la ruleta y la otra intenta adivinar el resultado."
@@ -65,8 +319,8 @@
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "La Ruleta de TikTok",
-        "alternateName": "Ruleta de TikTok",
+        "name": "La Ruleta Viral de TikTok",
+        "alternateName": "Ruleta Viral de TikTok",
         "description": "Juego online gratis para dos personas basado en una ruleta: gira, oculta el resultado y adivina donde ha caido.",
         "url": "__SITE_URL__/",
         "applicationCategory": "GameApplication",
@@ -106,36 +360,47 @@
       </main>
     </noscript>
     <div id="root">
-      <main class="h-dvh overflow-hidden bg-[#f7f4ef] text-[#202a32] sm:bg-[#e9ede8]" aria-label="La Ruleta de TikTok">
-        <div class="mx-auto flex h-full w-full max-w-6xl items-center justify-center p-3 sm:p-5">
-          <section class="w-full max-w-sm rounded-[1.5rem] bg-[#f7f4ef] p-5 text-center shadow-[0_18px_40px_rgba(32,42,50,0.14)] sm:rounded-[1.75rem] sm:p-6">
-            <h1 class="text-2xl font-black uppercase tracking-[0.08em]">La Ruleta de TikTok</h1>
-            <p class="mt-2 text-sm font-semibold text-[#7b6f63]">Elige como jugar</p>
+      <main class="app-root app-background" aria-label="La Ruleta de TikTok">
+        <div class="app-frame">
+          <section class="home-shell">
+            <div class="home-copy">
+              <div>
+                <div class="home-kicker">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#d63a31" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" />
+                  </svg>
+                  Party game
+                </div>
+                <h1 class="home-title">La Ruleta<br />de TikTok</h1>
+                <div class="home-pills">
+                  <div class="home-pill"><span>Rondas rapidas</span></div>
+                  <div class="home-pill"><span>Listo para sala</span></div>
+                </div>
+              </div>
 
-            <div class="mt-6 flex flex-col gap-3">
-              <button
-                type="button"
-                class="flex h-12 min-w-0 items-center justify-center gap-2 rounded-full bg-[#202a32] px-4 text-xs font-black uppercase tracking-[0.06em] text-white shadow-[0_12px_24px_rgba(15,23,42,0.14)] transition active:scale-95 disabled:active:scale-100 sm:h-14 sm:min-w-32 sm:gap-3 sm:px-6 sm:text-sm"
-              >
-                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect width="20" height="14" x="2" y="3" rx="2" />
-                  <line x1="8" x2="16" y1="21" y2="21" />
-                  <line x1="12" x2="12" y1="17" y2="21" />
-                </svg>
-                <span class="truncate">Local</span>
-              </button>
-              <button
-                type="button"
-                class="flex h-12 min-w-0 items-center justify-center gap-2 rounded-full bg-white px-4 text-xs font-black uppercase tracking-[0.06em] text-[#202a32] shadow-[0_12px_24px_rgba(15,23,42,0.14)] transition active:scale-95 disabled:active:scale-100 sm:h-14 sm:min-w-32 sm:gap-3 sm:px-6 sm:text-sm"
-              >
-                <svg class="h-5 w-5 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 20h.01" />
-                  <path d="M2 8.82a15 15 0 0 1 20 0" />
-                  <path d="M5 12.86a10 10 0 0 1 14 0" />
-                  <path d="M8.5 16.43a5 5 0 0 1 7 0" />
-                </svg>
-                <span class="truncate">Online</span>
-              </button>
+              <div class="home-actions">
+                <button type="button" class="home-button home-button-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect width="20" height="14" x="2" y="3" rx="2" />
+                    <line x1="8" x2="16" y1="21" y2="21" />
+                    <line x1="12" x2="12" y1="17" y2="21" />
+                  </svg>
+                  <span>Local</span>
+                </button>
+                <button type="button" class="home-button home-button-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 20h.01" />
+                    <path d="M2 8.82a15 15 0 0 1 20 0" />
+                    <path d="M5 12.86a10 10 0 0 1 14 0" />
+                    <path d="M8.5 16.43a5 5 0 0 1 7 0" />
+                  </svg>
+                  <span>Online</span>
+                </button>
+              </div>
+            </div>
+            <div class="home-wheel-stage" aria-hidden="true">
+              <div class="home-wheel-shadow"></div>
+              <div class="critical-wheel-placeholder"></div>
             </div>
           </section>
         </div>
