@@ -1,9 +1,12 @@
 import { Monitor, ShieldCheck, Sparkles, Trophy, Wifi } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Suspense, lazy, useEffect, useState } from 'react';
+import AdSlot from './components/AdSlot';
 import Dial from './components/Dial';
+import { trackEvent } from './lib/analytics';
 
 type Mode = 'menu' | 'local' | 'online';
+const MENU_AD_SLOT = import.meta.env.VITE_ADSENSE_MENU_SLOT;
 
 const LocalGame = lazy(() => import('./components/LocalGame'));
 const OnlineGame = lazy(() => import('./components/OnlineGame'));
@@ -50,15 +53,31 @@ const App = () => {
               </div>
 
               <div className="home-actions">
-                <button type="button" className="home-button home-button-primary" onClick={() => setMode('local')}>
+                <button
+                  type="button"
+                  className="home-button home-button-primary"
+                  onClick={() => {
+                    trackEvent('local_started');
+                    setMode('local');
+                  }}
+                >
                   <Monitor />
                   <span>Local</span>
                 </button>
-                <button type="button" className="home-button home-button-secondary" onClick={() => setMode('online')}>
+                <button
+                  type="button"
+                  className="home-button home-button-secondary"
+                  onClick={() => {
+                    trackEvent('online_started');
+                    setMode('online');
+                  }}
+                >
                   <Wifi />
                   <span>Online</span>
                 </button>
               </div>
+
+              <AdSlot className="home-ad" slot={MENU_AD_SLOT} />
             </div>
 
             <div className="home-wheel-stage">

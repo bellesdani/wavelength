@@ -200,6 +200,21 @@ input {
   gap: 0.75rem;
 }
 
+.ad-slot {
+  width: 100%;
+  min-height: 72px;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.home-ad {
+  max-width: 28rem;
+}
+
+.lobby-ad {
+  margin-top: 1rem;
+}
+
 .home-button {
   display: flex;
   min-width: 0;

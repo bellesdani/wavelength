@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, DoorOpen, Eye, EyeOff, Flag, Link2, RefreshCw, Unplug } from 'lucide-react';
+import { ArrowLeft, DoorOpen, Eye, EyeOff, Flag, Link2, RefreshCw, Share2, Unplug } from 'lucide-react';
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
+import AdSlot from './AdSlot';
 import ActionButton from './ActionButton';
 import Dial from './Dial';
 import type { GameSnapshot, PlayerSlot, RoomSnapshot, RoundHistoryEntry } from '../types/room';
 import { DEFAULT_SPIN_DURATION_MS } from '../types/room';
+import { trackEvent } from '../lib/analytics';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 const PLAYER_ID_STORAGE_KEY = 'wavelength-mini-player-id';
+const LOBBY_AD_SLOT = import.meta.env.VITE_ADSENSE_LOBBY_SLOT;
 
 const initialState: GameSnapshot = {
   coverOpen: false,
@@ -45,6 +48,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
   const [status, setStatus] = useState('Sin conectar');
   const [state, setState] = useState<GameSnapshot>(initialState);
   const currentRoomCodeRef = useRef<string | null>(null);
+  const reconnectingPlayerTrackedRef = useRef(false);
   const playerNameRef = useRef(playerName);
 
   useEffect(() => {
@@ -73,12 +77,19 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
       currentRoomCodeRef.current = snapshot.code;
       setRoom(snapshot);
       setState(snapshot.state);
-      setStatus('');
+      const reconnectingPlayer = hasReconnectingPlayer(snapshot);
+      setStatus(reconnectingPlayer ? 'Esperando reconexion...' : snapshot.players < 2 ? 'Esperando jugador...' : '');
+
+      if (reconnectingPlayer && !reconnectingPlayerTrackedRef.current) {
+        trackEvent('room_reconnecting_player', { room_code: snapshot.code });
+      }
+      reconnectingPlayerTrackedRef.current = reconnectingPlayer;
     });
     socket.on('room_error', (message: string) => setStatus(message));
     socket.on('room_notice', (message: string) => setStatus(message));
     socket.on('left_room', () => {
       currentRoomCodeRef.current = null;
+      reconnectingPlayerTrackedRef.current = false;
       setRoom(null);
       setState(initialState);
       setStatus('Conectado');
@@ -96,6 +107,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
       return;
     }
 
+    trackEvent('create_room');
     socket.emit('create_room', playerName.trim(), playerId);
   };
 
@@ -107,6 +119,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
 
     const code = joinCode.trim().toUpperCase();
     if (code) {
+      trackEvent('join_room', { room_code: code });
       socket.emit('join_room', code, playerName.trim(), playerId);
       return;
     }
@@ -178,6 +191,8 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
             </button>
           </div>
         </div>
+
+        <AdSlot className="lobby-ad" slot={LOBBY_AD_SLOT} />
       </section>
     );
   }
@@ -189,7 +204,40 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
   const headerStatus = state.guessLocked && !revealActive ? 'Respuesta fijada - ya se puede puntuar' : status;
   const leaveRoom = () => {
     currentRoomCodeRef.current = null;
+    reconnectingPlayerTrackedRef.current = false;
     socket.emit('leave_room');
+  };
+  const shareRoom = async () => {
+    const shareText = `Entra en La Ruleta de TikTok con el codigo ${room.code}`;
+    const shareUrl = window.location.origin;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: shareText,
+          title: 'La Ruleta de TikTok',
+          url: shareUrl,
+        });
+        trackEvent('share_room_code', { room_code: room.code });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+      }
+    }
+
+    try {
+      if (!navigator.clipboard) throw new Error('Clipboard unavailable');
+
+      await navigator.clipboard.writeText(`${shareText} - ${shareUrl}`);
+      setStatus('Codigo copiado');
+      trackEvent('copy_room_code', { room_code: room.code });
+    } catch {
+      setStatus(`Codigo: ${room.code}`);
+    }
+  };
+  const finishRound = () => {
+    trackEvent('round_finished', { room_code: room.code, role: room.role, round: room.round });
+    socket.emit('finish_round');
   };
   const goBack = () => {
     leaveRoom();
@@ -224,7 +272,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
         className="h-full w-full"
         label="Puntuar"
         icon={<Flag />}
-        onClick={() => socket.emit('finish_round')}
+        onClick={finishRound}
         variant="light"
         disabled={revealActive}
       />
@@ -243,8 +291,19 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex min-w-0 flex-col items-center gap-1.5 sm:gap-2">
-          <div className="status-chip flex h-8 max-w-full items-center truncate rounded-lg px-4 text-[11px] font-black uppercase text-[#52606a] sm:h-9 sm:px-5 sm:text-sm">
-            Sala {room.code} - Ronda {room.round} - {room.players}/2
+          <div className="flex max-w-full items-center justify-center gap-1.5">
+            <div className="status-chip flex h-8 min-w-0 max-w-full items-center truncate rounded-lg px-3 text-[11px] font-black uppercase text-[#52606a] sm:h-9 sm:px-5 sm:text-sm">
+              Sala {room.code} - Ronda {room.round} - {room.players}/2
+            </div>
+            <button
+              type="button"
+              onClick={shareRoom}
+              className="icon-button flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#17222b] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] sm:h-9 sm:w-9"
+              aria-label="Compartir codigo de sala"
+              title="Compartir codigo"
+            >
+              <Share2 className="h-4 w-4" />
+            </button>
           </div>
           <div className="status-chip-dark flex h-8 max-w-full items-center truncate rounded-lg px-4 text-[11px] font-black uppercase text-white sm:h-9 sm:px-5 sm:text-xs">
             {myPlayerLabel} - {isGuesser ? 'Adivina' : 'Gira y mira'}
@@ -362,6 +421,11 @@ function getPlayerLabel(round: number, role: 'guesser' | 'spinner', names: RoomS
 
 function validatePlayerName(playerName: string) {
   return playerName.trim().length > 0;
+}
+
+function hasReconnectingPlayer(room: RoomSnapshot) {
+  const namedPlayers = Object.values(room.names).filter(Boolean).length;
+  return room.players > 0 && namedPlayers > room.players;
 }
 
 function getOrCreatePlayerId() {
