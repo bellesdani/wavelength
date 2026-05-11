@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, DoorOpen, Eye, EyeOff, Flag, Link2, RefreshCw, Unplug } from 'lucide-react';
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
@@ -8,6 +8,7 @@ import type { GameSnapshot, PlayerSlot, RoomSnapshot, RoundHistoryEntry } from '
 import { DEFAULT_SPIN_DURATION_MS } from '../types/room';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+const PLAYER_ID_STORAGE_KEY = 'wavelength-mini-player-id';
 
 const initialState: GameSnapshot = {
   coverOpen: false,
@@ -24,22 +25,52 @@ interface OnlineGameProps {
 }
 
 const OnlineGame = ({ onBack }: OnlineGameProps) => {
-  const socket = useMemo<Socket>(() => io(SOCKET_URL, { autoConnect: false }), []);
+  const playerId = useMemo(() => getOrCreatePlayerId(), []);
+  const socket = useMemo<Socket>(
+    () =>
+      io(SOCKET_URL, {
+        autoConnect: false,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 500,
+        reconnectionDelayMax: 3000,
+        timeout: 10000,
+      }),
+    [],
+  );
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [joinCode, setJoinCode] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [serverTimeOffset, setServerTimeOffset] = useState(0);
   const [status, setStatus] = useState('Sin conectar');
   const [state, setState] = useState<GameSnapshot>(initialState);
+  const currentRoomCodeRef = useRef<string | null>(null);
+  const playerNameRef = useRef(playerName);
+
+  useEffect(() => {
+    playerNameRef.current = playerName;
+  }, [playerName]);
 
   useEffect(() => {
     socket.connect();
 
-    socket.on('connect', () => setStatus('Conectado'));
-    socket.on('disconnect', () => setStatus('Desconectado'));
+    socket.on('connect', () => {
+      const roomCode = currentRoomCodeRef.current;
+      const currentPlayerName = playerNameRef.current.trim();
+
+      if (roomCode && currentPlayerName) {
+        setStatus('Reconectando sala...');
+        socket.emit('resume_room', roomCode, currentPlayerName, playerId);
+        return;
+      }
+
+      setStatus('Conectado');
+    });
+    socket.on('disconnect', () => setStatus(currentRoomCodeRef.current ? 'Reconectando...' : 'Desconectado'));
     socket.on('room_state', (snapshot: RoomSnapshot) => {
       const serverTime = typeof snapshot.serverTime === 'number' && Number.isFinite(snapshot.serverTime) ? snapshot.serverTime : Date.now();
       setServerTimeOffset(serverTime - Date.now());
+      currentRoomCodeRef.current = snapshot.code;
       setRoom(snapshot);
       setState(snapshot.state);
       setStatus('');
@@ -47,6 +78,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
     socket.on('room_error', (message: string) => setStatus(message));
     socket.on('room_notice', (message: string) => setStatus(message));
     socket.on('left_room', () => {
+      currentRoomCodeRef.current = null;
       setRoom(null);
       setState(initialState);
       setStatus('Conectado');
@@ -56,7 +88,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
       socket.disconnect();
       socket.removeAllListeners();
     };
-  }, [socket]);
+  }, [playerId, socket]);
 
   const createRoom = () => {
     if (!validatePlayerName(playerName)) {
@@ -64,7 +96,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
       return;
     }
 
-    socket.emit('create_room', playerName.trim());
+    socket.emit('create_room', playerName.trim(), playerId);
   };
 
   const joinRoom = () => {
@@ -75,7 +107,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
 
     const code = joinCode.trim().toUpperCase();
     if (code) {
-      socket.emit('join_room', code, playerName.trim());
+      socket.emit('join_room', code, playerName.trim(), playerId);
       return;
     }
 
@@ -155,8 +187,12 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
   const myPlayerLabel = getPlayerLabel(room.round, room.role, room.names);
   const revealActive = Boolean(state.roundResult);
   const headerStatus = state.guessLocked && !revealActive ? 'Respuesta fijada - ya se puede puntuar' : status;
-  const goBack = () => {
+  const leaveRoom = () => {
+    currentRoomCodeRef.current = null;
     socket.emit('leave_room');
+  };
+  const goBack = () => {
+    leaveRoom();
     onBack();
   };
   const actionButtons = isGuesser ? (
@@ -224,7 +260,7 @@ const OnlineGame = ({ onBack }: OnlineGameProps) => {
         </div>
         <button
           type="button"
-          onClick={() => socket.emit('leave_room')}
+          onClick={leaveRoom}
           className="icon-button flex h-12 w-12 items-center justify-center rounded-lg text-[#17222b] transition hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] sm:h-14 sm:w-14"
           aria-label="Salir de la sala"
         >
@@ -326,6 +362,29 @@ function getPlayerLabel(round: number, role: 'guesser' | 'spinner', names: RoomS
 
 function validatePlayerName(playerName: string) {
   return playerName.trim().length > 0;
+}
+
+function getOrCreatePlayerId() {
+  if (typeof window === 'undefined') return createPlayerId();
+
+  try {
+    const existing = window.localStorage.getItem(PLAYER_ID_STORAGE_KEY);
+    if (existing) return existing;
+
+    const playerId = createPlayerId();
+    window.localStorage.setItem(PLAYER_ID_STORAGE_KEY, playerId);
+    return playerId;
+  } catch {
+    return createPlayerId();
+  }
+}
+
+function createPlayerId() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID();
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 }
 
 const RoundResultOverlay = ({

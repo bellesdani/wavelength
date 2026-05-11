@@ -19,6 +19,7 @@ const ROUND_RESULT_DURATION_MS = 3000;
 const ROOM_CODE_LENGTH = 6;
 const MAX_ROOMS = 500;
 const ROOM_IDLE_TTL_MS = 2 * 60 * 60 * 1000;
+const DISCONNECT_GRACE_MS = 60 * 1000;
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 const CREATE_ROOM_LIMIT = {
   max: 8,
@@ -49,7 +50,7 @@ interface Room {
   history: RoundHistoryEntry[];
   lastActivityAt: number;
   names: PlayerNames;
-  players: Map<string, PlayerSlot>;
+  players: Map<string, RoomPlayer>;
   round: number;
   roundTimer?: NodeJS.Timeout;
   scores: Scoreboard;
@@ -70,6 +71,12 @@ type RoundResult = {
   nextRoundAt: number;
   score: number;
   scoredPlayer: PlayerSlot;
+};
+type RoomPlayer = {
+  disconnectedAt?: number;
+  leaveTimer?: NodeJS.Timeout;
+  slot: PlayerSlot;
+  socketId?: string;
 };
 type RateBucket = {
   count: number;
@@ -114,7 +121,7 @@ if (existsSync(indexPath)) {
 io.on('connection', (socket) => {
   const clientKey = getClientKey(socket);
 
-  socket.on('create_room', (playerName?: string) => {
+  socket.on('create_room', (playerName?: string, playerIdInput?: string) => {
     if (!hasPlayerName(playerName)) {
       socket.emit('room_error', 'Pon tu nombre para jugar');
       return;
@@ -131,12 +138,11 @@ io.on('connection', (socket) => {
     }
 
     const room = createRoom();
-    joinRoom(socket, room, playerName);
-    socket.join(room.code);
+    joinRoom(socket, room, playerName, getPlayerId(socket, playerIdInput));
     emitRoom(room);
   });
 
-  socket.on('join_room', (code: string, playerName?: string) => {
+  socket.on('join_room', (code: string, playerName?: string, playerIdInput?: string) => {
     if (!hasPlayerName(playerName)) {
       socket.emit('room_error', 'Pon tu nombre para jugar');
       return;
@@ -154,13 +160,36 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (room.players.size >= 2 && !room.players.has(socket.id)) {
+    const playerId = getPlayerId(socket, playerIdInput);
+
+    if (room.players.size >= 2 && !room.players.has(playerId)) {
       socket.emit('room_error', 'Sala llena');
       return;
     }
 
-    joinRoom(socket, room, playerName);
-    socket.join(room.code);
+    joinRoom(socket, room, playerName, playerId);
+    touchRoom(room);
+    emitRoom(room);
+  });
+
+  socket.on('resume_room', (code: string, playerName?: string, playerIdInput?: string) => {
+    const room = rooms.get(normalizeCode(code));
+
+    if (!room) {
+      socket.emit('room_error', 'Sala no encontrada');
+      socket.emit('left_room');
+      return;
+    }
+
+    const playerId = getPlayerId(socket, playerIdInput);
+
+    if (!room.players.has(playerId)) {
+      socket.emit('room_error', 'Te has desconectado de la sala');
+      socket.emit('left_room');
+      return;
+    }
+
+    joinRoom(socket, room, playerName, playerId);
     touchRoom(room);
     emitRoom(room);
   });
@@ -300,7 +329,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    leaveCurrentRoom(socket);
+    scheduleCurrentRoomLeave(socket);
   });
 });
 
@@ -336,25 +365,38 @@ function createRoom() {
   return room;
 }
 
-function joinRoom(socket: Socket, room: Room, playerName?: string) {
+function joinRoom(socket: Socket, room: Room, playerName: string | undefined, playerId: string) {
   leaveCurrentRoom(socket);
-  const slots = Array.from(room.players.values());
-  const slot: PlayerSlot = slots.includes('player1') ? 'player2' : 'player1';
-  room.players.set(socket.id, slot);
+  const existingPlayer = room.players.get(playerId);
+  const slots = Array.from(room.players.values()).map((player) => player.slot);
+  const slot: PlayerSlot = existingPlayer?.slot ?? (slots.includes('player1') ? 'player2' : 'player1');
+
+  if (existingPlayer?.leaveTimer) {
+    clearTimeout(existingPlayer.leaveTimer);
+  }
+
+  room.players.set(playerId, {
+    slot,
+    socketId: socket.id,
+  });
   room.names[slot] = normalizePlayerName(playerName, slot);
+  socket.data.playerId = playerId;
+  socket.join(room.code);
   touchRoom(room);
 }
 
 function leaveCurrentRoom(socket: Socket) {
-  const room = getSocketRoom(socket.id);
-  if (!room) return;
+  const current = getSocketPlayer(socket.id);
+  if (!current) return;
 
-  const slot = room.players.get(socket.id);
-  room.players.delete(socket.id);
-  if (slot) {
-    room.names[slot] = null;
+  const { player, playerId, room } = current;
+  if (player.leaveTimer) {
+    clearTimeout(player.leaveTimer);
   }
+  room.players.delete(playerId);
+  room.names[player.slot] = null;
   socket.leave(room.code);
+  delete socket.data.playerId;
 
   if (room.players.size === 0) {
     destroyRoom(room);
@@ -364,20 +406,69 @@ function leaveCurrentRoom(socket: Socket) {
   }
 }
 
+function scheduleCurrentRoomLeave(socket: Socket) {
+  const current = getSocketPlayer(socket.id);
+  if (!current) return;
+
+  const { player, playerId, room } = current;
+  const disconnectedAt = Date.now();
+
+  player.socketId = undefined;
+  player.disconnectedAt = disconnectedAt;
+  socket.leave(room.code);
+  touchRoom(room);
+  emitRoom(room);
+
+  if (player.leaveTimer) {
+    clearTimeout(player.leaveTimer);
+  }
+
+  player.leaveTimer = setTimeout(() => {
+    const currentPlayer = room.players.get(playerId);
+    if (!currentPlayer || currentPlayer.socketId || currentPlayer.disconnectedAt !== disconnectedAt) return;
+
+    room.players.delete(playerId);
+    room.names[currentPlayer.slot] = null;
+
+    if (room.players.size === 0) {
+      destroyRoom(room);
+      return;
+    }
+
+    touchRoom(room);
+    emitRoom(room);
+  }, DISCONNECT_GRACE_MS);
+}
+
 function getSocketRoom(socketId: string) {
-  return Array.from(rooms.values()).find((room) => room.players.has(socketId));
+  return getSocketPlayer(socketId)?.room;
+}
+
+function getSocketPlayer(socketId: string) {
+  for (const room of rooms.values()) {
+    for (const [playerId, player] of room.players) {
+      if (player.socketId === socketId) {
+        return { player, playerId, room };
+      }
+    }
+  }
+
+  return undefined;
 }
 
 function emitRoom(room: Room) {
   const serverTime = Date.now();
+  const players = getActivePlayerCount(room);
 
-  room.players.forEach((_slot, socketId) => {
-    io.to(socketId).emit('room_state', {
+  room.players.forEach((player) => {
+    if (!player.socketId) return;
+
+    io.to(player.socketId).emit('room_state', {
       code: room.code,
       history: room.history,
       names: room.names,
-      players: room.players.size,
-      role: getRole(room, socketId),
+      players,
+      role: getRoleForSlot(room, player.slot),
       round: room.round,
       scores: room.scores,
       serverTime,
@@ -387,10 +478,18 @@ function emitRoom(room: Room) {
 }
 
 function getRole(room: Room, socketId: string): PlayerRole | undefined {
-  const slot = room.players.get(socketId);
-  if (!slot) return undefined;
+  const player = getSocketPlayer(socketId)?.player;
+  if (!player) return undefined;
 
+  return getRoleForSlot(room, player.slot);
+}
+
+function getRoleForSlot(room: Room, slot: PlayerSlot): PlayerRole {
   return slot === getGuesserSlot(room) ? 'guesser' : 'spinner';
+}
+
+function getActivePlayerCount(room: Room) {
+  return Array.from(room.players.values()).filter((player) => player.socketId).length;
 }
 
 function getGuesserSlot(room: Room): PlayerSlot {
@@ -430,6 +529,23 @@ function normalizePlayerName(playerName: string | undefined, slot: PlayerSlot) {
 
 function hasPlayerName(playerName: string | undefined) {
   return String(playerName ?? '').trim().length > 0;
+}
+
+function getPlayerId(socket: Socket, playerIdInput: string | undefined) {
+  const normalized = normalizePlayerId(playerIdInput);
+  if (normalized) return normalized;
+
+  const existing = normalizePlayerId(socket.data.playerId);
+  if (existing) return existing;
+
+  return socket.id;
+}
+
+function normalizePlayerId(playerId: unknown) {
+  const normalized = String(playerId ?? '').trim();
+  if (!normalized) return null;
+
+  return normalized.slice(0, 80);
 }
 
 function touchRoom(room: Room) {
@@ -483,9 +599,15 @@ function cleanupRateBuckets(buckets: Map<string, RateBucket>, now: number) {
 function destroyRoom(room: Room, notifyPlayers = false) {
   if (room.spinTimer) clearTimeout(room.spinTimer);
   if (room.roundTimer) clearTimeout(room.roundTimer);
+  room.players.forEach((player) => {
+    if (player.leaveTimer) clearTimeout(player.leaveTimer);
+  });
 
   if (notifyPlayers) {
-    room.players.forEach((_slot, socketId) => {
+    room.players.forEach((player) => {
+      if (!player.socketId) return;
+
+      const socketId = player.socketId;
       const socket = io.sockets.sockets.get(socketId);
       socket?.leave(room.code);
       socket?.emit('room_error', 'Sala cerrada por inactividad');
